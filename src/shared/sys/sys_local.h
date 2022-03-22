@@ -24,7 +24,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #ifdef VITA
 #include <vitasdk.h>
 #include <vitaGL.h>
-#define DEFAULT_BASEDIR "ux0:/data/staticja"
+#define DEFAULT_BASEDIR "ux0:/data/staticjk"
 #endif
 
 #include "qcommon/qcommon.h"

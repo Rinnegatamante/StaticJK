@@ -25,11 +25,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "sys_local.h"
 #include "con_local.h"
 
+#ifndef VITA
 #include <unistd.h>
 #include <signal.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#endif
 
 #ifdef VITA
 /*
@@ -64,7 +66,7 @@ CON_Print
 */
 void CON_Print(const char *msg) {
 #ifndef RELEASE
-    FILE *f = fopen("ux0:data/staticja/log.txt", "a+");
+    FILE *f = fopen("ux0:data/staticjk/log.txt", "a+");
 	fwrite(msg, 1, strlen(msg), f);
 	fclose(f);
 #endif

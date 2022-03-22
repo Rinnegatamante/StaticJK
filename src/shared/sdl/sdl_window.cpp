@@ -80,6 +80,21 @@ typedef struct vidmode_s
 } vidmode_t;
 
 const vidmode_t r_vidModes[] = {
+#ifdef VITA
+	{ "Mode  0: 480x272",		480,	272},
+	{ "Mode  1: 640x368",		640,	368},
+	{ "Mode  2: 720x408",		720,	408},
+	{ "Mode  3: 960x544",		960,	544},
+	{ "Mode  4: 960x544",		960,	544},
+	{ "Mode  5: 960x544",		960,	544},
+	{ "Mode  6: 960x544",		960,	544},
+	{ "Mode  7: 960x544",		960,	544},
+	{ "Mode  8: 960x544",		960,	544},
+	{ "Mode  9: 960x544",		960,	544},
+	{ "Mode 10: 960x544",		960,	544},
+	{ "Mode 11: 960x544",		960,	544},
+	{ "Mode 12: 960x544",		960,	544}
+#else
     { "Mode  0: 320x240",		320,	240 },
     { "Mode  1: 400x300",		400,	300 },
     { "Mode  2: 512x384",		512,	384 },
@@ -93,6 +108,7 @@ const vidmode_t r_vidModes[] = {
     { "Mode 10: 2048x1536",		2048,	1536 },
     { "Mode 11: 856x480 (wide)", 856,	 480 },
     { "Mode 12: 2400x600(surround)",2400,600 }
+#endif
 };
 static const int	s_numVidModes = ARRAY_LEN( r_vidModes );
 
@@ -148,11 +164,16 @@ Minimize the game so that user is back at the desktop
 */
 void GLimp_Minimize(void)
 {
+#ifndef VITA
 	SDL_MinimizeWindow( screen );
+#endif
 }
 
 void WIN_Present( window_t *window )
 {
+#ifdef VITA
+	vglSwapBuffers(GL_FALSE);
+#else
 	if ( window->api == GRAPHICS_API_OPENGL )
 	{
 		SDL_GL_SwapWindow(screen);
@@ -199,6 +220,7 @@ void WIN_Present( window_t *window )
 
 		r_fullscreen->modified = qfalse;
 	}
+#endif
 }
 
 /*
@@ -681,6 +703,28 @@ GLimp_StartDriverAndSetMode
 */
 static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDesc_t *windowDesc, int mode, qboolean fullscreen, qboolean noborder)
 {
+#ifdef VITA
+	static bool inited = false;
+	if (mode < 0) mode = 3;
+	
+	glConfig->vidWidth = r_vidModes[mode].width;
+	glConfig->vidHeight = r_vidModes[mode].height;
+	glConfig->colorBits = 32;
+	glConfig->depthBits = 32;
+	glConfig->stencilBits = 8;
+	glConfig->displayFrequency = 60;
+	glConfig->stereoEnabled = qfalse;
+	
+	glConfig->deviceSupportsGamma = qfalse;
+	glConfig->textureCompression = TC_S3TC;
+	glConfig->textureEnvAddAvailable = qtrue;
+	glConfig->isFullscreen = qtrue;
+	
+	if (!inited) {
+		vglInitExtended(0xA00000, glConfig->vidWidth, glConfig->vidHeight, 0x1800000, SCE_GXM_MULTISAMPLE_4X);
+		inited = true;
+	}
+#else
 	rserr_t err;
 
 	if (!SDL_WasInit(SDL_INIT_VIDEO))
@@ -734,7 +778,7 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 		default:
 			break;
 	}
-
+#endif
 	return qtrue;
 }
 
@@ -783,8 +827,11 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	}
 
 	glConfig->deviceSupportsGamma =
+#ifdef VITA
+		(qboolean)false;
+#else
 		(qboolean)(!r_ignorehwgamma->integer && SDL_SetWindowBrightness( screen, 1.0f ) >= 0);
-
+#endif
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init( screen );
 
@@ -893,10 +940,24 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 
 void *WIN_GL_GetProcAddress( const char *proc )
 {
+#ifndef VITA
 	return SDL_GL_GetProcAddress( proc );
+#else
+	return vglGetProcAddress(proc);
+#endif
 }
 
 qboolean WIN_GL_ExtensionSupported( const char *extension )
 {
+#ifdef VITA
+	int gl_num_extensions;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &gl_num_extensions);
+	for (int i = 0; i < gl_num_extensions; i++) {
+		if (!strcmp(glGetStringi(GL_EXTENSIONS, i), extension))
+			return qtrue;
+	}
+	return qfalse;
+#else
 	return SDL_GL_ExtensionSupported( extension ) == SDL_TRUE ? qtrue : qfalse;
+#endif
 }

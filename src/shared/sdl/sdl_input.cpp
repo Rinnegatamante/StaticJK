@@ -593,23 +593,30 @@ static void IN_InitJoystick( void )
 
 void IN_Init( void *windowData )
 {
+#ifndef VITA
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 	{
 		Com_Error( ERR_FATAL, "IN_Init called before SDL_Init( SDL_INIT_VIDEO )" );
 		return;
 	}
-
+#endif
 	SDL_window = (SDL_Window *)windowData;
 
 	Com_DPrintf( "\n------- Input Initialization -------\n" );
 
 	// joystick variables
 	in_keyboardDebug = Cvar_Get( "in_keyboardDebug", "0", CVAR_ARCHIVE_ND );
+#ifdef VITA
+	in_joystick = Cvar_Get( "in_joystick", "1", CVAR_ARCHIVE_ND|CVAR_LATCH );
 
+	// mouse variables
+	in_mouse = Cvar_Get( "in_mouse", "1", CVAR_ARCHIVE );
+#else
 	in_joystick = Cvar_Get( "in_joystick", "0", CVAR_ARCHIVE_ND|CVAR_LATCH );
 
 	// mouse variables
 	in_mouse = Cvar_Get( "in_mouse", "1", CVAR_ARCHIVE );
+#endif
 	in_nograb = Cvar_Get( "in_nograb", "0", CVAR_ARCHIVE_ND );
 
 	SDL_StartTextInput( );
@@ -624,11 +631,11 @@ void IN_Init( void *windowData )
 		SDL_SetHint( "SDL_MOUSE_RELATIVE_MODE_WARP", "0" );
 	}
 	IN_DeactivateMouse( );
-
+#ifndef VITA
 	int appState = SDL_GetWindowFlags( SDL_window );
 	Cvar_SetValue( "com_unfocused", ( appState & SDL_WINDOW_INPUT_FOCUS ) == 0 );
 	Cvar_SetValue( "com_minimized", ( appState & SDL_WINDOW_MINIMIZED ) != 0 );
-
+#endif
 	IN_InitJoystick( );
 	Com_DPrintf( "------------------------------------\n" );
 }

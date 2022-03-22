@@ -788,8 +788,11 @@ int main ( int argc, char* argv[] )
 	if ( argc >= 2 && Q_strncmp ( argv[1], "-psn", 4 ) == 0 )
 		argc = 1;
 #endif
-
+#ifdef VITA
+	Sys_SetBinaryPath( DEFAULT_BASEDIR );
+#else
 	Sys_SetBinaryPath( Sys_Dirname( argv[ 0 ] ) );
+#endif
 	Sys_SetDefaultInstallPath( DEFAULT_BASEDIR );
 
 	// Concatenate the command line for passing to Com_Init
@@ -887,9 +890,6 @@ int main(int argc, char **argv) {
 		}
 		sceKernelExitProcess(0);
 	}
-	
-	// Starting input
-	//IN_Init(NULL);
 	
 	// We need a bigger stack to run Quake 3, so we create a new thread with a proper stack size
 	SceUID main_thread = sceKernelCreateThread("Jedi Academy", ja_main, 0x40, 0x200000, 0, 0, NULL);

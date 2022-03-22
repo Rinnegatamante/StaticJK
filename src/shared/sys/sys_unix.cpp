@@ -38,6 +38,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sys_local.h"
 
 #ifdef VITA
+extern "C"{
+	extern void *memrchr(const void *, int, size_t);
+};
 char nick[SCE_SYSTEM_PARAM_USERNAME_MAXSIZE];
 #endif
 
@@ -200,21 +203,80 @@ qboolean Sys_LowPhysicalMemory( void )
 Sys_Basename
 ==================
 */
+#ifdef VITA
+const char *Sys_Basename(char *path) {
+    char *p = strrchr(path, '/');
+    return p ? p + 1 : (char *) path;
+}
+#else
 const char *Sys_Basename( char *path )
 {
 	return basename( path );
 }
-
+#endif
 /*
 ==================
 Sys_Dirname
 ==================
 */
+#ifdef VITA
+const char *Sys_Dirname(char *path) {
+    static const char dot[] = ".";
+    char *last_slash;
+
+    /* Find last '/'.  */
+    last_slash = path != NULL ? strrchr(path, '/') : NULL;
+
+    if (last_slash != NULL && last_slash != path && last_slash[1] == '\0') {
+        /* Determine whether all remaining characters are slashes.  */
+        char *runp;
+
+        for (runp = last_slash; runp != path; --runp)
+            if (runp[-1] != '/')
+                break;
+
+        /* The '/' is the last character, we have to look further.  */
+        if (runp != path)
+            last_slash = memrchr(path, '/', runp - path);
+    }
+
+    if (last_slash != NULL) {
+        /* Determine whether all remaining characters are slashes.  */
+        char *runp;
+
+        for (runp = last_slash; runp != path; --runp)
+            if (runp[-1] != '/')
+                break;
+
+        /* Terminate the path.  */
+        if (runp == path) {
+            /* The last slash is the first character in the string.  We have to
+            return "/".  As a special case we have to return "//" if there
+            are exactly two slashes at the beginning of the string.  See
+            XBD 4.10 Path Name Resolution for more information.  */
+            if (last_slash == path + 1)
+                ++last_slash;
+            else
+                last_slash = path + 1;
+        } else
+            last_slash = runp;
+
+        last_slash[0] = '\0';
+    } else
+        /* This assignment is ill-designed but the XPG specs require to
+        return a string containing "." in any case no directory part is
+        found and so a static and constant string is required.  */
+        path = (char *) dot;
+
+    return path;
+}
+
+#else
 const char *Sys_Dirname( char *path )
 {
 	return dirname( path );
 }
-
+#endif
 /*
 ==============================================================
 
@@ -502,6 +564,9 @@ Sys_DefaultHomePath
 #ifdef MACOS_X
 char *Sys_DefaultHomePath(void)
 {
+#ifdef VITA
+	return DEFAULT_BASEDIR;
+#endif
 	char *p;
 
 	if ( !homePath[0] )

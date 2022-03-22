@@ -22,11 +22,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 ===========================================================================
 */
 
-#ifdef VITA
-#include <setjmp.h>
-#endif
 #include "../server/exe_headers.h"
 
+#include <setjmp.h>
 #include "tr_common.h"
 #include <png.h>
 
