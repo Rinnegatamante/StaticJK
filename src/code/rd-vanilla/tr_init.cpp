@@ -184,7 +184,7 @@ extern cvar_t	*com_buildScript;
 
 cvar_t	*r_environmentMapping;
 cvar_t *r_screenshotJpegQuality;
-
+#ifndef VITA
 #if !defined(__APPLE__)
 PFNGLSTENCILOPSEPARATEPROC qglStencilOpSeparate;
 #endif
@@ -230,7 +230,7 @@ PFNGLISPROGRAMARBPROC qglIsProgramARB;
 
 PFNGLLOCKARRAYSEXTPROC qglLockArraysEXT;
 PFNGLUNLOCKARRAYSEXTPROC qglUnlockArraysEXT;
-
+#endif
 bool g_bTextureRectangleHack = false;
 
 void RE_SetLightStyle(int style, int color);
@@ -460,18 +460,22 @@ static void GLimp_InitExtensions( void )
 	Com_Printf ("...using GL_EXT_texture_edge_clamp\n" );
 
 	// GL_ARB_multitexture
+#ifndef VITA
 	qglMultiTexCoord2fARB = NULL;
 	qglActiveTextureARB = NULL;
 	qglClientActiveTextureARB = NULL;
+#endif
 	if ( ri.GL_ExtensionSupported( "GL_ARB_multitexture" ) )
 	{
 		if ( r_ext_multitexture->integer )
 		{
+#ifndef VITA
 			qglMultiTexCoord2fARB = ( PFNGLMULTITEXCOORD2FARBPROC ) ri.GL_GetProcAddress( "glMultiTexCoord2fARB" );
 			qglActiveTextureARB = ( PFNGLACTIVETEXTUREARBPROC ) ri.GL_GetProcAddress( "glActiveTextureARB" );
 			qglClientActiveTextureARB = ( PFNGLCLIENTACTIVETEXTUREARBPROC ) ri.GL_GetProcAddress( "glClientActiveTextureARB" );
 
 			if ( qglActiveTextureARB )
+#endif
 			{
 				qglGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &glConfig.maxActiveTextures );
 
@@ -481,9 +485,11 @@ static void GLimp_InitExtensions( void )
 				}
 				else
 				{
+#ifndef VITA
 					qglMultiTexCoord2fARB = NULL;
 					qglActiveTextureARB = NULL;
 					qglClientActiveTextureARB = NULL;
+#endif
 					Com_Printf ("...not using GL_ARB_multitexture, < 2 texture units\n" );
 				}
 			}
@@ -499,18 +505,22 @@ static void GLimp_InitExtensions( void )
 	}
 
 	// GL_EXT_compiled_vertex_array
+#ifndef VITA
 	qglLockArraysEXT = NULL;
 	qglUnlockArraysEXT = NULL;
+#endif
 	if ( ri.GL_ExtensionSupported( "GL_EXT_compiled_vertex_array" ) )
 	{
 		if ( r_ext_compiled_vertex_array->integer )
 		{
 			Com_Printf ("...using GL_EXT_compiled_vertex_array\n" );
+#ifndef VITA
 			qglLockArraysEXT = ( PFNGLLOCKARRAYSEXTPROC ) ri.GL_GetProcAddress( "glLockArraysEXT" );
 			qglUnlockArraysEXT = ( PFNGLUNLOCKARRAYSEXTPROC ) ri.GL_GetProcAddress( "glUnlockArraysEXT" );
 			if (!qglLockArraysEXT || !qglUnlockArraysEXT) {
 				Com_Error (ERR_FATAL, "bad getprocaddress");
 			}
+#endif
 		}
 		else
 		{
@@ -529,6 +539,7 @@ static void GLimp_InitExtensions( void )
 		// NOTE: This extension requires multitexture support (over 2 units).
 		if ( glConfig.maxActiveTextures >= 2 )
 		{
+#ifndef VITA
 			bNVRegisterCombiners = true;
 			// Register Combiners function pointer address load.	- AReis
 			// NOTE: VV guys will _definetly_ not be able to use regcoms. Pixel Shaders are just as good though :-)
@@ -552,10 +563,13 @@ static void GLimp_InitExtensions( void )
 			if ( !qglCombinerParameterfvNV || !qglCombinerParameterivNV || !qglCombinerParameterfNV || !qglCombinerParameteriNV || !qglCombinerInputNV ||
 				 !qglCombinerOutputNV || !qglFinalCombinerInputNV || !qglGetCombinerInputParameterfvNV || !qglGetCombinerInputParameterivNV ||
 				 !qglGetCombinerOutputParameterfvNV || !qglGetCombinerOutputParameterivNV || !qglGetFinalCombinerInputParameterfvNV || !qglGetFinalCombinerInputParameterivNV )
+#endif
 			{
 				bNVRegisterCombiners = false;
+#ifndef VITA
 				qglCombinerParameterfvNV = NULL;
 				qglCombinerParameteriNV = NULL;
+#endif
 				Com_Printf ("...GL_NV_register_combiners failed\n" );
 			}
 		}
@@ -600,6 +614,7 @@ static void GLimp_InitExtensions( void )
 	}
 
 	// If we support one or the other, load the shared function pointers.
+#ifndef VITA
 	if ( bARBVertexProgram || bARBFragmentProgram )
 	{
 		qglProgramStringARB					= (PFNGLPROGRAMSTRINGARBPROC)  ri.GL_GetProcAddress("glProgramStringARB");
@@ -629,18 +644,23 @@ static void GLimp_InitExtensions( void )
              !qglProgramLocalParameter4fARB || !qglProgramLocalParameter4fvARB || !qglGetProgramEnvParameterdvARB ||
              !qglGetProgramEnvParameterfvARB || !qglGetProgramLocalParameterdvARB || !qglGetProgramLocalParameterfvARB ||
              !qglGetProgramivARB || !qglGetProgramStringARB || !qglIsProgramARB )
+#endif
 		{
 			bARBVertexProgram = false;
 			bARBFragmentProgram = false;
+#ifndef VITA
 			qglGenProgramsARB = NULL;	//clear ptrs that get checked
 			qglProgramEnvParameter4fARB = NULL;
+#endif
 			Com_Printf ("...ignoring GL_ARB_vertex_program\n" );
 			Com_Printf ("...ignoring GL_ARB_fragment_program\n" );
 		}
+#ifndef VITA
 	}
-
+#endif
 	// Figure out which texture rectangle extension to use.
 	bool bTexRectSupported = false;
+
 	if ( Q_stricmpn( glConfig.vendor_string, "ATI Technologies",16 )==0
 		&& Q_stricmpn( glConfig.version_string, "1.3.3",5 )==0
 		&& glConfig.version_string[5] < '9' ) //1.3.34 and 1.3.37 and 1.3.38 are broken for sure, 1.3.39 is not
@@ -652,7 +672,7 @@ static void GLimp_InitExtensions( void )
 	{
 		bTexRectSupported = true;
 	}
-
+#ifndef VITA
 	// Find out how many general combiners they have.
 	#define GL_MAX_GENERAL_COMBINERS_NV       0x854D
 	GLint iNumGeneralCombiners = 0;
@@ -668,12 +688,13 @@ static void GLimp_InitExtensions( void )
 		// ri.Cvar_Set( "r_DynamicGlow", "1" );
 	}
 	else
+#endif
 	{
 		g_bDynamicGlowSupported = false;
 		ri.Cvar_Set( "r_DynamicGlow","0" );
 	}
 
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(VITA)
 	qglStencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC)ri.GL_GetProcAddress("glStencilOpSeparate");
 	if (qglStencilOpSeparate)
 	{
@@ -814,7 +835,6 @@ byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, int *pa
 	GLint packAlign;
 
 	qglGetIntegerv(GL_PACK_ALIGNMENT, &packAlign);
-
 	linelen = width * 3;
 	padwidth = PAD(linelen, packAlign);
 
@@ -934,10 +954,13 @@ R_ScreenshotFilename
 void R_ScreenshotFilename( char *buf, int bufSize, const char *ext ) {
 	time_t rawtime;
 	char timeStr[32] = {0}; // should really only reach ~19 chars
-
+#ifndef VITA
 	time( &rawtime );
 	strftime( timeStr, sizeof( timeStr ), "%Y-%m-%d_%H-%M-%S", localtime( &rawtime ) ); // or gmtime
-
+#else
+	static int num = 0;
+	sprintf(timeStr, "%d\n", num++);
+#endif
 	Com_sprintf( buf, bufSize, "screenshots/shot%s%s", timeStr, ext );
 }
 
@@ -1290,11 +1313,14 @@ void GfxInfo_f( void )
 		ri.Printf( PRINT_ALL, "rendering primitives: " );
 		primitives = r_primitives->integer;
 		if ( primitives == 0 ) {
-			if ( qglLockArraysEXT ) {
+#ifndef VITA
+			if ( qglLockArraysEXT )
+#endif
 				primitives = 2;
-			} else {
+#ifndef VITA
+			else
 				primitives = 1;
-			}
+#endif
 		}
 		if ( primitives == -1 ) {
 			ri.Printf( PRINT_ALL, "none\n" );
@@ -1312,8 +1338,13 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "texture bits: %d\n", r_texturebits->integer );
 	if ( r_texturebitslm->integer > 0 )
 		ri.Printf( PRINT_ALL, "lightmap texture bits: %d\n", r_texturebitslm->integer );
+#ifdef VITA
+	ri.Printf( PRINT_ALL, "multitexture: %s\n", enablestrings[1] );
+	ri.Printf( PRINT_ALL, "compiled vertex arrays: %s\n", enablestrings[1] );
+#else
 	ri.Printf( PRINT_ALL, "multitexture: %s\n", enablestrings[qglActiveTextureARB != 0] );
 	ri.Printf( PRINT_ALL, "compiled vertex arrays: %s\n", enablestrings[qglLockArraysEXT != 0 ] );
+#endif
 	ri.Printf( PRINT_ALL, "texenv add: %s\n", enablestrings[glConfig.textureEnvAddAvailable != 0] );
 	ri.Printf( PRINT_ALL, "compressed textures: %s\n", enablestrings[glConfig.textureCompression != TC_NONE] );
 	ri.Printf( PRINT_ALL, "compressed lightmaps: %s\n", enablestrings[(r_ext_compressed_lightmaps->integer != 0 && glConfig.textureCompression != TC_NONE)] );
@@ -1788,7 +1819,7 @@ extern void R_ShutdownWorldEffects(void);
 void RE_Shutdown( qboolean destroyWindow, qboolean restarting ) {
 	for ( size_t i = 0; i < numCommands; i++ )
 		ri.Cmd_RemoveCommand( commands[i].cmd );
-
+#ifndef VITA
 	if ( r_DynamicGlow && r_DynamicGlow->integer )
 	{
 		// Release the Glow Vertex Shader.
@@ -1821,7 +1852,7 @@ void RE_Shutdown( qboolean destroyWindow, qboolean restarting ) {
 		// Release the blur texture.
 		qglDeleteTextures( 1, &tr.blurImage );
 	}
-
+#endif
 	R_ShutdownWorldEffects();
 	R_ShutdownFonts();
 	if ( tr.registered )

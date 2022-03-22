@@ -37,6 +37,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "qcommon/q_shared.h"
 #include "sys_local.h"
 
+#ifdef VITA
+char nick[SCE_SYSTEM_PARAM_USERNAME_MAXSIZE];
+#endif
+
 qboolean stdinIsATTY = qfalse;
 
 // Used to determine where to store user-specific files
@@ -79,6 +83,19 @@ unsigned long sys_timeBase = 0;
 int curtime;
 int Sys_Milliseconds (bool baseTime)
 {
+#ifdef VITA
+	static uint64_t	base;
+
+	uint64_t time = sceKernelGetProcessTimeWide() / 1000;
+	
+	if (!baseTime) {
+		curtime = time;
+	} else {
+		curtime = (int)(time - base);
+	}
+
+	return curtime;
+#else
 	struct timeval tp;
 
 	gettimeofday(&tp, NULL);
@@ -98,6 +115,7 @@ int Sys_Milliseconds (bool baseTime)
 	}
 
 	return curtime;
+#endif
 }
 
 int Sys_Milliseconds2( void )
@@ -112,6 +130,9 @@ Sys_RandomBytes
 */
 bool Sys_RandomBytes( byte *string, int len )
 {
+#ifdef VITA
+	return false;
+#else
 	FILE *fp;
 
 	fp = fopen( "/dev/urandom", "r" );
@@ -128,6 +149,7 @@ bool Sys_RandomBytes( byte *string, int len )
 
 	fclose( fp );
 	return true;
+#endif
 }
 
 /*
@@ -137,6 +159,15 @@ bool Sys_RandomBytes( byte *string, int len )
  */
 char *Sys_GetCurrentUser( void )
 {
+#ifdef VITA
+	SceAppUtilInitParam init_param;
+	SceAppUtilBootParam boot_param;
+	memset(&init_param, 0, sizeof(SceAppUtilInitParam));
+	memset(&boot_param, 0, sizeof(SceAppUtilBootParam));
+	sceAppUtilInit(&init_param, &boot_param);
+	sceAppUtilSystemParamGetString(SCE_SYSTEM_PARAM_ID_USERNAME, nick, SCE_SYSTEM_PARAM_USERNAME_MAXSIZE);
+	return nick;
+#else
 #ifdef __EMSCRIPTEN__
 	return "player";
 #else
@@ -146,6 +177,7 @@ char *Sys_GetCurrentUser( void )
 		return "player";
 	}
 	return p->pw_name;
+#endif
 #endif
 }
 
@@ -367,7 +399,7 @@ void Sys_Sleep( int msec )
 {
 	if( msec == 0 )
 		return;
-
+#ifndef VITA
 	if( stdinIsATTY )
 	{
 		fd_set fdset;
@@ -395,6 +427,12 @@ void Sys_Sleep( int msec )
 
 		usleep( msec * 1000 );
 	}
+#else
+	if( msec < 0 )
+		msec = 10;
+
+	sceKernelDelayThread(msec * 1000);
+#endif
 }
 
 /*
@@ -404,16 +442,25 @@ Sys_Mkdir
 */
 qboolean Sys_Mkdir( const char *path )
 {
+#ifdef VITA
+	int result = sceIoMkdir(path, 0777);
+    if (result != 0 && result != 0x80010011
+            && result != 0x8001000D)
+        return (qboolean)(errno == EEXIST);
+#else
 	int result = mkdir( path, 0750 );
 
 	if( result != 0 )
 		return (qboolean)(errno == EEXIST);
-
+#endif
 	return qtrue;
 }
 
 char *Sys_Cwd( void )
 {
+#ifdef VITA
+	return DEFAULT_BASEDIR;
+#else
 	static char cwd[MAX_OSPATH];
 
 	if ( getcwd( cwd, sizeof( cwd ) - 1 ) == NULL )
@@ -422,6 +469,7 @@ char *Sys_Cwd( void )
 		cwd[MAX_OSPATH-1] = '\0';
 
 	return cwd;
+#endif
 }
 
 /* Resolves path names and determines if they are the same */
@@ -507,6 +555,7 @@ char *Sys_DefaultHomePath(void)
 #endif
 
 void Sys_SetProcessorAffinity( void ) {
+#ifndef VITA
 #if defined(__linux__)
 	uint32_t cores;
 
@@ -527,8 +576,7 @@ void Sys_SetProcessorAffinity( void ) {
 #ifndef __EMSCRIPTEN__
 	sched_setaffinity(0, sizeof( set ), &set );
 #endif
-#elif defined(MACOS_X)
-	//TODO: Apple's APIs for this are weird but exist on a per-thread level. Good enough for us.
+#endif
 #endif
 }
 

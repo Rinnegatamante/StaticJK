@@ -31,6 +31,45 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <fcntl.h>
 #include <sys/time.h>
 
+#ifdef VITA
+/*
+==================
+CON_Shutdown
+==================
+*/
+void CON_Shutdown(void) {
+}
+
+/*
+==================
+CON_Init
+==================
+*/
+void CON_Init(void) {
+}
+
+/*
+==================
+CON_Input
+==================
+*/
+char *CON_Input(void) {
+    return NULL;
+}
+
+/*
+==================
+CON_Print
+==================
+*/
+void CON_Print(const char *msg) {
+#ifndef RELEASE
+    FILE *f = fopen("ux0:data/staticja/log.txt", "a+");
+	fwrite(msg, 1, strlen(msg), f);
+	fclose(f);
+#endif
+}
+#else
 /*
 =============================================================
 tty console routines
@@ -533,3 +572,4 @@ void CON_Print( const char *msg )
 		ttycon_show_overdue++;
 	}
 }
+#endif

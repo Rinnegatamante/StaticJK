@@ -140,7 +140,7 @@ decode (standard decoder) reduction_code:
 #include "port.h"
 
 // JDW
-#ifdef __linux__
+#if defined(__linux__) && !defined(VITA) 
 #include <sys/ioctl.h>
 #ifndef __EMSCRIPTEN__
 #include <sys/soundcard.h>

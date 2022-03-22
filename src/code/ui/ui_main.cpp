@@ -6450,6 +6450,24 @@ void UI_AdjustSaveGameListBox( int currentLine )
 
 }
 
+#ifdef VITA
+#include <vitasdk.h>
+const char *days[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+const char *months[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+char asctime_res[128];
+char *asctime(SceDateTime time) {
+	sprintf(asctime_res, "%s %s %d %02d:%02d:%02d %d",
+		days[sceRtcGetDayOfWeek(time.year, time.month, time.day)],
+		months[time.month],
+		time.day,
+		time.hour,
+		time.minute,
+		time.second,
+		time.year);
+	return asctime_res;
+}
+#endif
+
 /*
 =================
 ReadSaveDirectory
@@ -6497,9 +6515,13 @@ void ReadSaveDirectory (void)
 				{
 					s_savedata[s_savegame.saveFileCnt].currentSaveFileName = holdChar;
 					s_savedata[s_savegame.saveFileCnt].currentSaveFileDateTime = result;
-
+#ifdef VITA
+					SceDateTime localTime;
+					sceRtcGetCurrentClockLocalTime(&localTime);
+#else
 					struct tm *localTime;
 					localTime = localtime( &result );
+#endif
 					strcpy(s_savedata[s_savegame.saveFileCnt].currentSaveFileDateTimeString,asctime( localTime ) );
 					s_savegame.saveFileCnt++;
 					if (s_savegame.saveFileCnt == MAX_SAVELOADFILES)

@@ -887,7 +887,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 					qglDepthRange (0, 0);
 					break;
 			}
-
+#ifndef VITA
 			if ((backEnd.currentEntity->e.renderfx & RF_DISTORTION) &&
 				lastPostEnt != pRender->entNum)
 			{ //do the capture now, we only need to do it once per ent
@@ -927,7 +927,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 					lastPostEnt = pRender->entNum;
 				}
 			}
-
+#endif
 			rb_surfaceTable[ *pRender->drawSurf->surface ]( pRender->drawSurf->surface );
 			RB_EndSurface();
 		}
@@ -1330,7 +1330,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 		four texture coordinate offsets that allow 'peeking' into adjacent pixels. In the register
 		combiner (pixel shader), I combine the adjacent pixels using a weighting factor. - Aurelio
 	*/
-
+#ifndef VITA
 	// Render dynamic glowing/flaring objects.
 	if ( !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL) && g_bDynamicGlowSupported && r_DynamicGlow->integer )
 	{
@@ -1387,7 +1387,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 		// Draw the glow additively over the screen.
 		RB_DrawGlowOverlay();
 	}
-
+#endif
 	return (const void *)(cmd + 1);
 }
 
@@ -1402,9 +1402,9 @@ const void	*RB_DrawBuffer( const void *data ) {
 	const drawBufferCommand_t	*cmd;
 
 	cmd = (const drawBufferCommand_t *)data;
-
+#ifndef VITA
 	qglDrawBuffer( cmd->buffer );
-
+#endif
 		// clear screen for debugging
 	if (!( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) && tr.world && tr.refdef.rdflags & RDF_doLAGoggles)
 	{
@@ -1543,7 +1543,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 	}
 
 	cmd = (const swapBuffersCommand_t *)data;
-
+#ifndef VITA
 	// we measure overdraw by reading back the stencil buffer and
 	// counting up the number of increments that have happened
 	if ( r_measureOverdraw->integer ) {
@@ -1561,7 +1561,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 		backEnd.pc.c_overDraw += sum;
 		R_Free( stencilReadback );
 	}
-
+#endif
     if ( !glState.finishCalled ) {
         qglFinish();
 	}
@@ -1654,6 +1654,7 @@ GLuint g_uiCurrentPixelShaderType = 0x0;
 // Begin using a Pixel Shader.
 void BeginPixelShader( GLuint uiType, GLuint uiID )
 {
+#ifndef VITA
 	switch ( uiType )
 	{
 		// Using Register Combiners, so call the Display List that stores it.
@@ -1685,6 +1686,7 @@ void BeginPixelShader( GLuint uiType, GLuint uiID )
 		}
 		return;
 	}
+#endif
 }
 
 // Stop using a Pixel Shader and return states to normal.
@@ -1702,6 +1704,7 @@ extern bool g_bTextureRectangleHack;
 
 static inline void RB_BlurGlowTexture()
 {
+#ifndef VITA
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );
 
@@ -1869,11 +1872,13 @@ static inline void RB_BlurGlowTexture()
 
 	qglDisable( GL_BLEND );
 	glState.currenttmu = 0;	//this matches the last one we activated
+#endif
 }
 
 // Draw the glow blur over the screen additively.
 static inline void RB_DrawGlowOverlay()
 {
+#ifndef VITA
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );
 
@@ -1950,4 +1955,5 @@ static inline void RB_DrawGlowOverlay()
 	qglPopMatrix();
 	qglMatrixMode(GL_MODELVIEW);
 	qglPopMatrix();
+#endif
 }

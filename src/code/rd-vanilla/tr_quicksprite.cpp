@@ -111,13 +111,13 @@ void CQuickSpriteSystem::Flush(void)
 	qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, mColors );
 
 	qglVertexPointer (3, GL_FLOAT, 16, mVerts);
-
+#ifndef VITA
 	if ( qglLockArraysEXT )
 	{
 		qglLockArraysEXT(0, mNextVert);
 		GLimp_LogComment( "glLockArraysEXT\n" );
 	}
-
+#endif
 	qglDrawArrays(GL_QUADS, 0, mNextVert);
 
 	backEnd.pc.c_vertexes += mNextVert;
@@ -155,7 +155,7 @@ void CQuickSpriteSystem::Flush(void)
 		// Second pass from fog
 		backEnd.pc.c_totalIndexes += mNextVert;
 	}
-
+#ifndef VITA
 	//
 	// unlock arrays
 	//
@@ -164,7 +164,7 @@ void CQuickSpriteSystem::Flush(void)
 		qglUnlockArraysEXT();
 		GLimp_LogComment( "glUnlockArraysEXT\n" );
 	}
-
+#endif
 	mNextVert=0;
 }
 

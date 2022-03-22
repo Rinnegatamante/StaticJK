@@ -531,9 +531,10 @@ void RB_CaptureScreenImage(void)
 	int cX, cY;
 
 	GL_Bind( tr.screenImage );
+#ifdef VITA
 	//using this method, we could pixel-filter the texture and all sorts of crazy stuff.
 	//but, it is slow as hell.
-	/*
+	
 	static byte *tmp = NULL;
 	if (!tmp)
 	{
@@ -541,8 +542,7 @@ void RB_CaptureScreenImage(void)
 	}
 	qglReadPixels(0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_RGBA, GL_UNSIGNED_BYTE, tmp);
 	qglTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, tmp);
-	*/
-
+#else
 	if (radX > glConfig.maxTextureSize)
 	{
 		radX = glConfig.maxTextureSize;
@@ -583,6 +583,7 @@ void RB_CaptureScreenImage(void)
 	}
 
 	qglCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16, cX, cY, radX, radY, 0);
+#endif
 }
 
 

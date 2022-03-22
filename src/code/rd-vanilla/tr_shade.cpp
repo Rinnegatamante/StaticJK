@@ -33,6 +33,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include <GL/Regal.h>
 #endif
 
+#ifdef VITA
+#define APIENTRY
+#endif
+
 /*
 
   THIS ENTIRE FILE IS BACK END
@@ -48,6 +52,7 @@ bool		styleUpdated[MAX_LIGHT_STYLES];
 
 extern bool g_bRenderGlowingObjects;
 
+#ifndef VITA
 /*
 ================
 R_ArrayElementDiscrete
@@ -165,6 +170,7 @@ static void R_DrawStripElements( int numIndexes, const glIndex_t *indexes, void 
 
 	qglEnd();
 }
+#endif
 
 /*
 ==================
@@ -176,6 +182,7 @@ without compiled vertex arrays.
 ==================
 */
 static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
+#ifndef VITA
 	int		primitives;
 
 	primitives = r_primitives->integer;
@@ -191,11 +198,13 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 
 
 	if ( primitives == 2 ) {
+#endif
 		qglDrawElements( GL_TRIANGLES,
 						numIndexes,
 						GL_INDEX_TYPE,
 						indexes );
 		return;
+#ifndef VITA
 	}
 
 #ifndef __EMSCRIPTEN__
@@ -211,7 +220,7 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 #else
     R_DrawStripElements( numIndexes,  indexes, R_ArrayElementDiscrete );
 #endif
-
+#endif
 	// anything else will cause no drawing
 }
 
@@ -350,21 +359,21 @@ static void DrawTris (shaderCommands_t *input)
 		qglDisableClientState( GL_TEXTURE_COORD_ARRAY );
 
 		qglVertexPointer( 3, GL_FLOAT, 16, input->xyz );	// padded for SIMD
-
+#ifndef VITA
 		if ( qglLockArraysEXT )
 		{
 			qglLockArraysEXT( 0, input->numVertexes );
 			GLimp_LogComment( "glLockArraysEXT\n" );
 		}
-
+#endif
 		R_DrawElements( input->numIndexes, input->indexes );
-
+#ifndef VITA
 		if ( qglUnlockArraysEXT )
 		{
 			qglUnlockArraysEXT( );
 			GLimp_LogComment( "glUnlockArraysEXT\n" );
 		}
-
+#endif
 		qglDisable( GL_POLYGON_OFFSET_LINE );
 	}
 	else
@@ -377,19 +386,19 @@ static void DrawTris (shaderCommands_t *input)
 		qglDisableClientState (GL_TEXTURE_COORD_ARRAY);
 
 		qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
-
+#ifndef VITA
 		if (qglLockArraysEXT) {
 			qglLockArraysEXT(0, input->numVertexes);
 			GLimp_LogComment( "glLockArraysEXT\n" );
 		}
-
+#endif
 		R_DrawElements( input->numIndexes, input->indexes );
-
+#ifndef VITA
 		if (qglUnlockArraysEXT) {
 			qglUnlockArraysEXT();
 			GLimp_LogComment( "glUnlockArraysEXT\n" );
 		}
-
+#endif
 		qglDepthRange( 0, 1 );
 	}
 }
@@ -895,16 +904,22 @@ static void ProjectDlightTexture2( void ) {
 		if (!needResetVerts)
 		{
 			needResetVerts=1;
+#ifndef VITA
 			if (qglUnlockArraysEXT)
 			{
 				qglUnlockArraysEXT();
 				GLimp_LogComment( "glUnlockArraysEXT\n" );
 			}
+#endif
 		}
 		qglVertexPointer (3, GL_FLOAT, 16, vertCoordsArray);	// padded for SIMD
 
 		dStage = NULL;
+#ifdef VITA
+		if (tess.shader)
+#else
 		if (tess.shader && qglActiveTextureARB)
+#endif
 		{
 			int i = 0;
 			while (i < tess.shader->numUnfoggedPasses)
@@ -987,11 +1002,13 @@ static void ProjectDlightTexture2( void ) {
 	if (needResetVerts)
 	{
 		qglVertexPointer (3, GL_FLOAT, 16, tess.xyz);	// padded for SIMD
+#ifndef VITA
 		if (qglLockArraysEXT)
 		{
 			qglLockArraysEXT(0, tess.numVertexes);
 			GLimp_LogComment( "glLockArraysEXT\n" );
 		}
+#endif
 	}
 }
 static void ProjectDlightTexture( void ) {
@@ -1251,7 +1268,11 @@ static void ProjectDlightTexture( void ) {
 
 
 		dStage = NULL;
+#ifdef VITA
+		if (tess.shader)
+#else
 		if (tess.shader && qglActiveTextureARB)
+#endif
 		{
 			int i = 0;
 			while (i < tess.shader->numUnfoggedPasses)
@@ -2114,13 +2135,13 @@ void RB_StageIteratorGeneric( void )
 	// lock XYZ
 	//
 	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
-
+#ifndef VITA
 	if (qglLockArraysEXT)
 	{
 		qglLockArraysEXT(0, input->numVertexes);
 		GLimp_LogComment( "glLockArraysEXT\n" );
 	}
-
+#endif
 	//
 	// enable color and texcoord arrays after the lock if necessary
 	//
@@ -2161,7 +2182,7 @@ void RB_StageIteratorGeneric( void )
 	{
 		RB_FogPass();
 	}
-
+#ifndef VITA
 	//
 	// unlock arrays
 	//
@@ -2170,7 +2191,7 @@ void RB_StageIteratorGeneric( void )
 		qglUnlockArraysEXT();
 		GLimp_LogComment( "glUnlockArraysEXT\n" );
 	}
-
+#endif
 	//
 	// reset polygon offset
 	//

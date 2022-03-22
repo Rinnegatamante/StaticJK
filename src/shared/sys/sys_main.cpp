@@ -41,6 +41,9 @@ cvar_t *com_maxfps;
 cvar_t *com_maxfpsMinimized;
 cvar_t *com_maxfpsUnfocused;
 
+#ifdef VITA
+int _newlib_heap_size_user = 256 * 1024 * 1024;
+#endif
 /*
 =================
 Sys_SetBinaryPath
@@ -191,8 +194,10 @@ static void Sys_ErrorDialog( const char *error )
 	char timeStr[32] = {}; // should really only reach ~19 chars
 	char crashLogPath[MAX_OSPATH];
 
+#ifndef VITA
 	time( &rawtime );
 	strftime( timeStr, sizeof( timeStr ), "%Y-%m-%d_%H-%M-%S", localtime( &rawtime ) ); // or gmtime
+#endif
 	Com_sprintf( crashLogPath, sizeof( crashLogPath ),
 					"%s%ccrashlog-%s.txt",
 					Sys_DefaultHomePath(), PATH_SEP, timeStr );
@@ -763,7 +768,11 @@ void main_loop() {
 }
 #endif
 
+#ifdef VITA
+int ja_main ( unsigned int argc, char** argv )
+#else
 int main ( int argc, char* argv[] )
+#endif
 {
 	int		i;
 	char	commandLine[ MAX_STRING_CHARS ] = { 0 };
@@ -850,3 +859,45 @@ int main ( int argc, char* argv[] )
 	// never gets here
 	return 0;
 }
+
+#ifdef VITA
+int main(int argc, char **argv) {
+	
+	// Setting maximum clocks
+	scePowerSetArmClockFrequency(444);
+	scePowerSetBusClockFrequency(222);
+	scePowerSetGpuClockFrequency(222);
+	scePowerSetGpuXbarClockFrequency(166);
+	
+	// Checking for libshacccg.suprx existence
+	SceIoStat st1, st2;
+	if (!(sceIoGetstat("ur0:/data/libshacccg.suprx", &st1) >= 0 || sceIoGetstat("ur0:/data/external/libshacccg.suprx", &st2) >= 0)) {
+		vglInit(0);
+		SceMsgDialogUserMessageParam msg_param;
+		sceClibMemset(&msg_param, 0, sizeof(SceMsgDialogUserMessageParam));
+		msg_param.buttonType = SCE_MSG_DIALOG_BUTTON_TYPE_OK;
+		msg_param.msg = (const SceChar8*)"Error: Runtime shader compiler (libshacccg.suprx) is not installed.";
+		SceMsgDialogParam param;
+		sceMsgDialogParamInit(&param);
+		param.mode = SCE_MSG_DIALOG_MODE_USER_MSG;
+		param.userMsgParam = &msg_param;
+		sceMsgDialogInit(&param);
+		while (sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED) {
+			vglSwapBuffers(1);
+		}
+		sceKernelExitProcess(0);
+	}
+	
+	// Starting input
+	//IN_Init(NULL);
+	
+	// We need a bigger stack to run Quake 3, so we create a new thread with a proper stack size
+	SceUID main_thread = sceKernelCreateThread("Jedi Academy", ja_main, 0x40, 0x200000, 0, 0, NULL);
+	if (main_thread >= 0){
+		sceKernelStartThread(main_thread, 0, NULL);
+		sceKernelWaitThreadEnd(main_thread, NULL, NULL);
+	}
+	return 0;
+	
+}
+#endif

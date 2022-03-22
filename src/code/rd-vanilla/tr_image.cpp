@@ -182,11 +182,12 @@ static float R_BytesPerTex (int format)
 		//"RGBA "
 		return glConfig.colorBits/8.0f;
 		break;
-
+#ifndef VITA
 	case GL_RGBA4:
 		//"RGBA4"
 		return 2;
 		break;
+
 	case GL_RGB5:
 		//"RGB5 "
 		return 2;
@@ -205,6 +206,7 @@ static float R_BytesPerTex (int format)
 		//"S3TC "
 		return 0.33333f;
 		break;
+#endif
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
 		//"DXT1 "
 		return 0.33333f;
@@ -287,6 +289,7 @@ void R_ImageList_f( void ) {
 		case 4:
 			ri.Printf( PRINT_ALL, "RGBA " );
 			break;
+#ifndef VITA
 		case GL_RGBA8:
 			ri.Printf( PRINT_ALL, "RGBA8" );
 			break;
@@ -296,18 +299,21 @@ void R_ImageList_f( void ) {
 		case GL_RGB4_S3TC:
 			ri.Printf( PRINT_ALL, "S3TC " );
 			break;
+#endif
 		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
 			ri.Printf( PRINT_ALL, "DXT1 " );
 			break;
 		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
 			ri.Printf( PRINT_ALL, "DXT5 " );
 			break;
+#ifndef VITA
 		case GL_RGBA4:
 			ri.Printf( PRINT_ALL, "RGBA4" );
 			break;
 		case GL_RGB5:
 			ri.Printf( PRINT_ALL, "RGB5 " );
 			break;
+#endif
 		default:
 			ri.Printf( PRINT_ALL, "???? " );
 		}
@@ -319,9 +325,11 @@ void R_ImageList_f( void ) {
 		case GL_CLAMP:
 			ri.Printf( PRINT_ALL, "clmp " );
 			break;
+#ifndef VITA
 		case GL_CLAMP_TO_EDGE:
 			ri.Printf( PRINT_ALL, "clpE " );
 			break;
+#endif
 		default:
 			ri.Printf( PRINT_ALL, "%4i ", image->wrapClampMode );
 			break;
@@ -631,11 +639,14 @@ static void Upload32( unsigned *data,
 	    // select proper internal format
 	    if ( samples == 3 )
 	    {
+#ifndef VITA
 		    if ( glConfig.textureCompression == TC_S3TC && allowTC )
 		    {
 			    *pformat = GL_RGB4_S3TC;
 		    }
-		    else if ( glConfig.textureCompression == TC_S3TC_DXT && allowTC )
+		    else
+#endif
+			if ( glConfig.textureCompression == TC_S3TC_DXT && allowTC )
 		    {	// Compress purely color - no alpha
 			    if ( r_texturebits->integer == 16 ) {
 				    *pformat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;	//this format cuts to 16 bit
@@ -644,6 +655,7 @@ static void Upload32( unsigned *data,
 				    *pformat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 			    }
 		    }
+#ifndef VITA
 		    else if ( isLightmap && r_texturebitslm->integer > 0 )
 		    {
 			    // Allow different bit depth when we are a lightmap
@@ -664,6 +676,7 @@ static void Upload32( unsigned *data,
 		    {
 			    *pformat = GL_RGB8;
 		    }
+#endif			
 		    else
 		    {
 			    *pformat = 3;
@@ -675,6 +688,7 @@ static void Upload32( unsigned *data,
 		    {	// Compress both alpha and color
 			    *pformat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		    }
+#ifndef VITA
 		    else if ( r_texturebits->integer == 16 )
 		    {
 			    *pformat = GL_RGBA4;
@@ -683,6 +697,7 @@ static void Upload32( unsigned *data,
 		    {
 			    *pformat = GL_RGBA8;
 		    }
+#endif
 		    else
 		    {
 			    *pformat = 4;
@@ -796,14 +811,18 @@ static void R_Images_DeleteImageContents( image_t *pImage )
 static void GL_ResetBinds(void)
 {
 	memset( glState.currenttextures, 0, sizeof( glState.currenttextures ) );
+#ifndef VITA
 	if ( qglActiveTextureARB ) {
+#endif
 		GL_SelectTexture( 1 );
 		qglBindTexture( GL_TEXTURE_2D, 0 );
 		GL_SelectTexture( 0 );
 		qglBindTexture( GL_TEXTURE_2D, 0 );
+#ifndef VITA
 	} else {
 		qglBindTexture( GL_TEXTURE_2D, 0 );
 	}
+#endif
 }
 
 // special function used in conjunction with "devmapbsp"...
@@ -988,10 +1007,10 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 	if (strlen(name) >= MAX_QPATH ) {
 		Com_Error (ERR_DROP, "R_CreateImage: \"%s\" is too long\n", name);
 	}
-
-	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP) {
+#ifndef VITA
+	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP)
+#endif
 		glWrapClampMode = GL_CLAMP_TO_EDGE;
-	}
 
 	if (name[0] == '$')
 	{
@@ -1026,10 +1045,10 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 	image->width = width;
 	image->height = height;
 	image->wrapClampMode = glWrapClampMode;
-
-	if ( qglActiveTextureARB ) {
+#ifndef VITA
+	if ( qglActiveTextureARB )
+#endif
 		GL_SelectTexture( 0 );
-	}
 
 	GL_Bind(image);
 
@@ -1075,9 +1094,10 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	// need to do this here as well as in R_CreateImage, or R_FindImageFile_NoLoad() may complain about
 	//	different clamp parms used...
 	//
-	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP) {
+#ifndef VITA
+	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP)
+#endif
 		glWrapClampMode = GL_CLAMP_TO_EDGE;
-	}
 
 	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
 	if (image) {
@@ -1264,13 +1284,14 @@ static void R_CreateFogImage( void ) {
 	// what we want.
 	tr.fogImage = R_CreateImage("*fog", (byte *)data, FOG_S, FOG_T, GL_RGBA, qfalse, qfalse, qfalse, GL_CLAMP);
 	R_Free( data );
-
+#ifndef VITA
 	borderColor[0] = 1.0;
 	borderColor[1] = 1.0;
 	borderColor[2] = 1.0;
 	borderColor[3] = 1;
 
 	qglTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+#endif
 }
 
 /*
@@ -1329,7 +1350,7 @@ void R_CreateBuiltinImages( void ) {
 
 	tr.screenImage = R_CreateImage("*screen", (byte *)data, 8, 8, GL_RGBA, qfalse, qfalse, qfalse, GL_REPEAT );
 
-
+#ifndef VITA
 	// Create the scene glow image. - AReis
 	tr.screenGlow = 1024 + giTextureBindNum++;
 	qglDisable( GL_TEXTURE_2D );
@@ -1368,7 +1389,7 @@ void R_CreateBuiltinImages( void ) {
 	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	qglDisable( GL_TEXTURE_RECTANGLE_ARB );
 	qglEnable( GL_TEXTURE_2D );
-
+#endif
 
 	// with overbright bits active, we need an image which is some fraction of full color,
 	// for default lightmaps, etc

@@ -21,6 +21,12 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#ifdef VITA
+#include <vitasdk.h>
+#include <vitaGL.h>
+#define DEFAULT_BASEDIR "ux0:/data/staticja"
+#endif
+
 #include "qcommon/qcommon.h"
 
 void 		IN_Init( void *windowData );

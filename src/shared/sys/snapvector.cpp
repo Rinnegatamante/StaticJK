@@ -52,14 +52,16 @@ void Sys_SnapVector(float *v)
 
 	_controlfp_s(&newcontrol, oldcontrol, _MCW_RC);
 #else
+#ifndef VITA
 	// pure C99
 	int oldround = fegetround();
 	fesetround(FE_TONEAREST);
-
+#endif
 	v[0] = nearbyintf(v[0]);
 	v[1] = nearbyintf(v[1]);
 	v[2] = nearbyintf(v[2]);
-
+#ifndef VITA
 	fesetround(oldround);
+#endif
 #endif
 }

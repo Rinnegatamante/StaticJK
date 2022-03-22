@@ -113,6 +113,7 @@ const unsigned char g_strGlowPShaderARB[] =
 #define GL_PROGRAM_ERROR_POSITION_ARB					0x864B
 
 void ARB_InitGlowShaders(void) {
+#ifndef VITA
 	// Allocate and Load the global 'Glow' Vertex Program. - AReis
 	if ( qglGenProgramsARB )
 	{
@@ -189,4 +190,5 @@ void ARB_InitGlowShaders(void) {
 		qglGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &iErrPos );
 		assert( iErrPos == -1 );
 	}
+#endif
 }

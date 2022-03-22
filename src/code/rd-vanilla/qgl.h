@@ -23,6 +23,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#ifdef VITA
+#include <vitaGL.h>
+#else
 #if defined( __LINT__ )
 #	include <GL/gl.h>
 #elif defined( _WIN32 )
@@ -54,6 +57,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #endif
 #ifndef __EMSCRIPTEN__
 #include "glext.h"
+#endif
 #endif
 
 #define qglAccum glAccum
@@ -394,6 +398,17 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define qglVertexPointer glVertexPointer
 #define qglViewport glViewport
 
+#ifdef VITA
+#define GL_MAX_TEXTURE_UNITS_ARB GL_MAX_TEXTURE_UNITS
+#define qglActiveTextureARB glActiveTexture
+#define qglClientActiveTextureARB glClientActiveTexture
+#define GL_TEXTURE0_ARB GL_TEXTURE0
+#define GL_TEXTURE1_ARB GL_TEXTURE1
+#define GL_TEXTURE2_ARB GL_TEXTURE2
+#define GL_TEXTURE3_ARB GL_TEXTURE3
+#define qglStencilOpSeparate glStencilOpSeparate
+#define GL_RGB8 GL_RGB
+#else
 #if !defined(__APPLE__)
 extern PFNGLSTENCILOPSEPARATEPROC qglStencilOpSeparate;
 #endif
@@ -439,3 +454,4 @@ extern PFNGLISPROGRAMARBPROC qglIsProgramARB;
 
 extern PFNGLLOCKARRAYSEXTPROC qglLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC qglUnlockArraysEXT;
+#endif

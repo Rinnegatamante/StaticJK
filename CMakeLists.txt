@@ -1,26 +1,19 @@
-cmake_minimum_required(VERSION 3.16.1)
-project(jedi_academy)
-
+cmake_minimum_required(VERSION 3.7)
 set(CMAKE_CXX_STANDARD 14)
 
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-    find_package(SDL2 REQUIRED)
-    find_package(JPEG REQUIRED)
-    find_package(OpenGL REQUIRED)
-    find_package(PNG REQUIRED)
-    find_package(ZLIB REQUIRED)
-
-    include_directories(${SDL2_INCLUDE_DIRS})
-    include_directories(${JPEG_INCLUDE_DIRS})
-    include_directories(${OPENGL_INCLUDE_DIRS})
-    include_directories(${PNG_INCLUDE_DIRS})
-    include_directories(${ZLIB_INCLUDE_DIRS})
-endif ()
-
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  if(DEFINED ENV{VITASDK})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+  else()
+    message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+  endif()
+endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     include_directories(src/lib/SDL2/include)
 endif ()
+
+project(jedi_academy)
 
 # Local files import directories for easier #include
 include_directories(./src/code)
@@ -42,7 +35,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
 endif ()
 
 add_executable(
-        jedi_academy
+        ${PROJECT_NAME}.elf
         ./src/shared/sdl/sdl_icon.h
         ./src/shared/sdl/sdl_sound.h
         ./src/shared/sdl/sdl_qgl.h
@@ -514,31 +507,50 @@ add_executable(
         ./src/code/icarus/Sequencer.cpp
         src/globals.cpp src/code/cgame/animtable.cpp)
 
+include("${VITASDK}/share/vita.cmake" REQUIRED)
+set(VITA_APP_NAME "${PROJECT_NAME}")
+set(VITA_TITLEID  "STATICJA1")
+set(VITA_VERSION  "01.00")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I$(VITASDK)/arm-vita-eabi/include/machine -I$(VITASDK)/arm-vita-eabi/include/SDL2 -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fsigned-char -fno-short-enums")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I$(VITASDK)/arm-vita-eabi/include/machine -I$(VITASDK)/arm-vita-eabi/include/SDL2 -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fpermissive -fsigned-char -fno-short-enums")
+
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
-    target_link_libraries(jedi_academy ${SDL2_LIBRARIES} ${JPEG_LIBRARIES} ${OPENGL_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME}.elf ${SDL2_LIBRARIES} ${JPEG_LIBRARIES} ${OPENGL_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES})
 else ()
-    target_link_libraries(jedi_academy "-s TOTAL_MEMORY=52428800")
-    target_link_libraries(jedi_academy "-s ALLOW_MEMORY_GROWTH=1")
-    target_link_libraries(jedi_academy "-s DEMANGLE_SUPPORT=1")
-    target_link_libraries(jedi_academy "-s WASM=1")
-    target_link_libraries(jedi_academy "-s USE_SDL=2")
-    target_link_libraries(jedi_academy "-s ASSERTIONS=0")
-    target_link_libraries(jedi_academy "-s SDL2_IMAGE_FORMATS='[\"bmp\",\"png\",\"jpg\"]'")
-    target_link_libraries(jedi_academy "-s USE_REGAL=1")
-    target_link_libraries(jedi_academy "-O0")
-    target_link_libraries(jedi_academy "-s OFFSCREENCANVAS_SUPPORT=1")
-    target_link_libraries(jedi_academy "-s USE_LIBJPEG=1")
-    target_link_libraries(jedi_academy "-s USE_LIBPNG=1")
-    target_link_libraries(jedi_academy "-s FORCE_FILESYSTEM=1")
-    target_link_libraries(jedi_academy "-s USE_SDL_IMAGE=2")
-    target_link_libraries(jedi_academy "-s USE_ZLIB=1")
-    target_link_libraries(jedi_academy "-s ERROR_ON_UNDEFINED_SYMBOLS=0")
-    target_link_libraries(jedi_academy "-o jedi_academy.html")
-    target_link_libraries(jedi_academy "-s DEMANGLE_SUPPORT=1")
-    target_link_libraries(jedi_academy idbfs.js)
-    target_compile_options(jedi_academy PUBLIC "-O2")
-    target_link_libraries(jedi_academy "-O2")
-    target_link_libraries(jedi_academy "-s TOTAL_MEMORY=52428800")
-    target_link_libraries(jedi_academy "--pre-js ../scripts/preload.js")
-    set_target_properties(jedi_academy PROPERTIES LINK_FLAGS "-s USE_SDL=2")
+    target_link_libraries(${PROJECT_NAME}.elf "-s TOTAL_MEMORY=52428800")
+    target_link_libraries(${PROJECT_NAME}.elf "-s ALLOW_MEMORY_GROWTH=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s DEMANGLE_SUPPORT=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s WASM=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s USE_SDL=2")
+    target_link_libraries(${PROJECT_NAME}.elf "-s ASSERTIONS=0")
+    target_link_libraries(${PROJECT_NAME}.elf "-s SDL2_IMAGE_FORMATS='[\"bmp\",\"png\",\"jpg\"]'")
+    target_link_libraries(${PROJECT_NAME}.elf "-s USE_REGAL=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-O0")
+    target_link_libraries(${PROJECT_NAME}.elf "-s OFFSCREENCANVAS_SUPPORT=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s USE_LIBJPEG=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s USE_LIBPNG=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s FORCE_FILESYSTEM=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s USE_SDL_IMAGE=2")
+    target_link_libraries(${PROJECT_NAME}.elf "-s USE_ZLIB=1")
+    target_link_libraries(${PROJECT_NAME}.elf "-s ERROR_ON_UNDEFINED_SYMBOLS=0")
+    target_link_libraries(${PROJECT_NAME}.elf "-o ${PROJECT_NAME}.elf.html")
+    target_link_libraries(${PROJECT_NAME}.elf "-s DEMANGLE_SUPPORT=1")
+    target_link_libraries(${PROJECT_NAME}.elf idbfs.js)
+    target_compile_options(${PROJECT_NAME}.elf PUBLIC "-O2")
+    target_link_libraries(${PROJECT_NAME}.elf "-O2")
+    target_link_libraries(${PROJECT_NAME}.elf "-s TOTAL_MEMORY=52428800")
+    target_link_libraries(${PROJECT_NAME}.elf "--pre-js ../scripts/preload.js")
+    set_target_properties(${PROJECT_NAME}.elf PROPERTIES LINK_FLAGS "-s USE_SDL=2")
 endif ()
+
+vita_create_self(${PROJECT_NAME}.self ${PROJECT_NAME}.elf UNSAFE)
+	
+set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
+vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
+	VERSION ${VITA_VERSION}
+	NAME ${VITA_APP_NAME}
+	FILE ${PROJECT_SOURCE_DIR}/sce_sys/icon0.png sce_sys/icon0.png
+	FILE ${PROJECT_SOURCE_DIR}/sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
+	FILE ${PROJECT_SOURCE_DIR}/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
+	FILE ${PROJECT_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
+)
