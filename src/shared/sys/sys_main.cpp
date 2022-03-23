@@ -864,8 +864,23 @@ int main ( int argc, char* argv[] )
 }
 
 #ifdef VITA
+#if 0
+int crasher(unsigned int argc, void *argv) {
+  uint32_t *null_ptr = NULL;
+  for (;;) {
+    SceCtrlData pad;
+    sceCtrlPeekBufferPositive(0, &pad, 1);
+    if (pad.buttons & SCE_CTRL_START) *null_ptr = 0;
+    sceKernelDelayThread(100);
+  }
+}
+#endif
+
 int main(int argc, char **argv) {
-	
+#if 0
+	SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
+    sceKernelStartThread(crasher_thread, 0, NULL);
+#endif
 	// Setting maximum clocks
 	scePowerSetArmClockFrequency(444);
 	scePowerSetBusClockFrequency(222);

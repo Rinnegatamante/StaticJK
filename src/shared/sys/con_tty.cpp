@@ -65,10 +65,8 @@ CON_Print
 ==================
 */
 void CON_Print(const char *msg) {
-#ifndef RELEASE
-    FILE *f = fopen("ux0:data/staticjk/log.txt", "a+");
-	fwrite(msg, 1, strlen(msg), f);
-	fclose(f);
+#if 1
+    printf(msg);
 #endif
 }
 #else
