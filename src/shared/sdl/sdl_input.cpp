@@ -638,6 +638,10 @@ void IN_Init( void *windowData )
 #endif
 	IN_InitJoystick( );
 	Com_DPrintf( "------------------------------------\n" );
+#ifdef VITA
+	sceCtrlSetSamplingMode(SCE_CTRL_MODE_ANALOG_WIDE);
+	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, SCE_TOUCH_SAMPLING_STATE_START);
+#endif
 }
 
 uint8_t ConvertUTF32ToExpectedCharset( uint32_t utf32 )
@@ -952,7 +956,7 @@ static void IN_JoyMove( void )
 		return;
 
 	SDL_JoystickUpdate();
-
+#ifndef VITA
 	// update the ball state.
 	total = SDL_JoystickNumBalls(stick);
 	if (total > 0)
@@ -1084,7 +1088,7 @@ static void IN_JoyMove( void )
 
 	// save hat state
 	stick_state.oldhats = hats;
-
+#endif
 	// finally, look at the axes...
 	total = SDL_JoystickNumAxes(stick);
 	if (total > 0)
@@ -1140,8 +1144,56 @@ static void IN_JoyMove( void )
 	stick_state.oldaxes = axes;
 }
 
+#ifdef VITA
+uint32_t oldkeys, oldanalogs;
+
+void Sys_SetKeys(uint32_t keys) {
+	if((keys & SCE_CTRL_START) != (oldkeys & SCE_CTRL_START))
+		Sys_QueEvent(0, SE_KEY, A_ESCAPE, (keys & SCE_CTRL_START) == SCE_CTRL_START, 0, NULL);
+	if((keys & SCE_CTRL_SELECT) != (oldkeys & SCE_CTRL_SELECT))
+		Sys_QueEvent(0, SE_KEY, A_ENTER, (keys & SCE_CTRL_SELECT) == SCE_CTRL_SELECT, 0, NULL);
+	if((keys & SCE_CTRL_UP) != (oldkeys & SCE_CTRL_UP))
+		Sys_QueEvent(0, SE_KEY, A_AUX7, (keys & SCE_CTRL_UP) == SCE_CTRL_UP, 0, NULL);
+	if((keys & SCE_CTRL_DOWN) != (oldkeys & SCE_CTRL_DOWN))
+		Sys_QueEvent(0, SE_KEY, A_AUX8, (keys & SCE_CTRL_DOWN) == SCE_CTRL_DOWN, 0, NULL);
+	if((keys & SCE_CTRL_LEFT) != (oldkeys & SCE_CTRL_LEFT))
+		Sys_QueEvent(0, SE_KEY, A_AUX9, (keys & SCE_CTRL_LEFT) == SCE_CTRL_LEFT, 0, NULL);
+	if((keys & SCE_CTRL_RIGHT) != (oldkeys & SCE_CTRL_RIGHT))
+		Sys_QueEvent(0, SE_KEY, A_AUX10, (keys & SCE_CTRL_RIGHT) == SCE_CTRL_RIGHT, 0, NULL);
+	if((keys & SCE_CTRL_TRIANGLE) != (oldkeys & SCE_CTRL_TRIANGLE))
+		Sys_QueEvent(0, SE_KEY, A_AUX4, (keys & SCE_CTRL_TRIANGLE) == SCE_CTRL_TRIANGLE, 0, NULL);
+	if((keys & SCE_CTRL_SQUARE) != (oldkeys & SCE_CTRL_SQUARE))
+		Sys_QueEvent(0, SE_KEY, A_AUX3, (keys & SCE_CTRL_SQUARE) == SCE_CTRL_SQUARE, 0, NULL);
+	if((keys & SCE_CTRL_CIRCLE) != (oldkeys & SCE_CTRL_CIRCLE))
+		Sys_QueEvent(0, SE_KEY, A_AUX2, (keys & SCE_CTRL_CIRCLE) == SCE_CTRL_CIRCLE, 0, NULL);
+	if((keys & SCE_CTRL_CROSS) != (oldkeys & SCE_CTRL_CROSS))
+		Sys_QueEvent(0, SE_KEY, A_AUX1, (keys & SCE_CTRL_CROSS) == SCE_CTRL_CROSS, 0, NULL);
+	if((keys & SCE_CTRL_LTRIGGER) != (oldkeys & SCE_CTRL_LTRIGGER))
+		Sys_QueEvent(0, SE_KEY, A_AUX5, (keys & SCE_CTRL_LTRIGGER) == SCE_CTRL_LTRIGGER, 0, NULL);
+	if((keys & SCE_CTRL_RTRIGGER) != (oldkeys & SCE_CTRL_RTRIGGER))
+		Sys_QueEvent(0, SE_KEY, A_AUX6, (keys & SCE_CTRL_RTRIGGER) == SCE_CTRL_RTRIGGER, 0, NULL);
+}
+
+int old_x = - 1, old_y;
+#endif
 
 void IN_Frame (void) {
+#ifdef VITA
+	SceCtrlData keys;
+	sceCtrlPeekBufferPositive(0, &keys, 1);
+	if(keys.buttons != oldkeys)
+		Sys_SetKeys(keys.buttons);
+	oldkeys = keys.buttons;
+	
+	// Emulating mouse with touch
+	SceTouchData touch;
+	sceTouchPeek(SCE_TOUCH_PORT_FRONT, &touch, 1);
+	if (touch.reportNum > 0){
+		if (old_x != -1) Sys_QueEvent(0, SE_MOUSE, (touch.report[0].x - old_x), (touch.report[0].y - old_y), 0, NULL);
+		old_x = touch.report[0].x;
+		old_y = touch.report[0].y;
+	}else old_x = -1;
+#else
 	qboolean loading;
 
 	IN_JoyMove( );
@@ -1168,6 +1220,7 @@ void IN_Frame (void) {
 		IN_ActivateMouse( );
 
 	IN_ProcessEvents( );
+#endif
 }
 
 /*
