@@ -579,7 +579,9 @@ static void Upload32( unsigned *data,
 	    float		rMax = 0, gMax = 0, bMax = 0;
 	    int			width = *pUploadWidth;
 	    int			height = *pUploadHeight;
-
+#ifdef VITA
+		bool is_compressed = false;
+#endif
 	    //
 	    // perform optional picmip operation
 	    //
@@ -647,7 +649,11 @@ static void Upload32( unsigned *data,
 		    else
 #endif
 			if ( glConfig.textureCompression == TC_S3TC_DXT && allowTC )
-		    {	// Compress purely color - no alpha
+		    {	
+#ifdef VITA
+				is_compressed = true;
+#endif
+				// Compress purely color - no alpha
 			    if ( r_texturebits->integer == 16 ) {
 				    *pformat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;	//this format cuts to 16 bit
 			    }
@@ -717,32 +723,43 @@ static void Upload32( unsigned *data,
 		R_LightScaleTexture (data, width, height, (qboolean)!mipmap);
 
 	    qglTexImage2D (GL_TEXTURE_2D, 0, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-#ifndef VITA
 	    if (mipmap)
 	    {
-		    int		miplevel;
-
-		    miplevel = 0;
-		    while (width > 1 || height > 1)
-		    {
-			    R_MipMap( (byte *)data, width, height );
-			    width >>= 1;
-			    height >>= 1;
-			    if (width < 1)
-				    width = 1;
-			    if (height < 1)
-				    height = 1;
-			    miplevel++;
-
-			    if ( r_colorMipLevels->integer )
-			    {
-				    R_BlendOverTexture( (byte *)data, width * height, mipBlendColors[miplevel] );
-			    }
-
-			    qglTexImage2D (GL_TEXTURE_2D, miplevel, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		    }
-	    }
+#ifdef VITA
+			if (!is_compressed)
+			{
+				glGenerateMipmap(GL_TEXTURE_2D);
+			}
+			else
 #endif
+			{
+				int		miplevel;
+
+				miplevel = 0;
+#ifdef VITA
+				while (width > 4 && height > 4)
+#else
+				while (width > 1 || height > 1)
+#endif
+				{
+					R_MipMap( (byte *)data, width, height );
+					width >>= 1;
+					height >>= 1;
+					if (width < 1)
+						width = 1;
+					if (height < 1)
+						height = 1;
+					miplevel++;
+
+					if ( r_colorMipLevels->integer )
+					{
+						R_BlendOverTexture( (byte *)data, width * height, mipBlendColors[miplevel] );
+					}
+
+					qglTexImage2D (GL_TEXTURE_2D, miplevel, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+				}
+			}
+	    }
 	}
 	else
 	{
@@ -750,18 +767,18 @@ static void Upload32( unsigned *data,
 	}
 
 done:
-#ifndef VITA
 	if (mipmap)
 	{
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+#ifndef VITA
 		if( r_ext_texture_filter_anisotropic->integer > 1 && glConfig.maxTextureFilterAnisotropy > 0 )
 		{
 			qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, r_ext_texture_filter_anisotropic->value );
 		}
+#endif
 	}
 	else
-#endif
 	{
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -976,9 +993,11 @@ static image_t *R_FindImageFile_NoLoad(const char *name, qboolean mipmap, qboole
 			if ( pImage->allowPicmip != !!allowPicmip ) {
 				ri.Printf( PRINT_WARNING, "WARNING: reused image %s with mixed allowPicmip parm\n", pName );
 			}
+#ifndef VITA
 			if ( pImage->wrapClampMode != glWrapClampMode ) {
 				ri.Printf( PRINT_WARNING, "WARNING: reused image %s with mixed glWrapClampMode parm\n", pName );
 			}
+#endif
 		}
 
 		pImage->iLastLevelUsedOn = RE_RegisterMedia_GetLevel();
@@ -1093,9 +1112,7 @@ image_t	*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	// need to do this here as well as in R_CreateImage, or R_FindImageFile_NoLoad() may complain about
 	//	different clamp parms used...
 	//
-#ifndef VITA
 	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP)
-#endif
 		glWrapClampMode = GL_CLAMP_TO_EDGE;
 
 	image = R_FindImageFile_NoLoad(name, mipmap, allowPicmip, allowTC, glWrapClampMode );
