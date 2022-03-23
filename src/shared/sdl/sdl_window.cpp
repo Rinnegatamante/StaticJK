@@ -36,10 +36,8 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #ifdef VITA
 uint16_t *indices;
 float *gVertexBuffer;
-uint8_t *gColorBuffer;
 float *gTexCoordBuffer;
 float *gVertexBufferPtr;
-uint8_t *gColorBufferPtr;
 float *gTexCoordBufferPtr;
 #endif
 
@@ -183,7 +181,6 @@ void WIN_Present( window_t *window )
 	vglSwapBuffers(GL_FALSE);
 	vglIndexPointerMapped(indices);
 	gVertexBuffer = gVertexBufferPtr;
-	gColorBuffer = gColorBufferPtr;
 	gTexCoordBuffer = gTexCoordBufferPtr;
 #else
 	if ( window->api == GRAPHICS_API_OPENGL )
@@ -722,8 +719,8 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	glConfig->vidWidth = r_vidModes[mode].width;
 	glConfig->vidHeight = r_vidModes[mode].height;
 	glConfig->colorBits = 32;
-	glConfig->depthBits = 32;
-	glConfig->stencilBits = 8;
+	glConfig->depthBits = 24;
+	glConfig->stencilBits = 0;
 	glConfig->displayFrequency = 60;
 	glConfig->stereoEnabled = qfalse;
 	
@@ -742,10 +739,8 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 		vglIndexPointerMapped(indices);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		gVertexBufferPtr = (float *)malloc(0x100000);
-		gColorBufferPtr = (uint8_t *)malloc(0x100000);
 		gTexCoordBufferPtr = (float *)malloc(0x100000);
 		gVertexBuffer = gVertexBufferPtr;
-		gColorBuffer = gColorBufferPtr;
 		gTexCoordBuffer = gTexCoordBufferPtr;
 	
 		inited = true;

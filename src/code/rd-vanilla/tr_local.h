@@ -37,7 +37,6 @@ typedef unsigned int glIndex_t;
 #else
 #include <vitasdk.h>
 extern float *gVertexBuffer;
-extern uint8_t *gColorBuffer;
 extern float *gTexCoordBuffer;
 extern uint16_t *indices;
 #define GL_INDEX_TYPE		GL_UNSIGNED_SHORT

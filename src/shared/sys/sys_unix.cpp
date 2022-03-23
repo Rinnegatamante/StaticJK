@@ -461,7 +461,6 @@ void Sys_Sleep( int msec )
 {
 	if( msec == 0 )
 		return;
-#ifndef VITA
 	if( stdinIsATTY )
 	{
 		fd_set fdset;
@@ -486,15 +485,12 @@ void Sys_Sleep( int msec )
 		// With nothing to select() on, we can't wait indefinitely
 		if( msec < 0 )
 			msec = 10;
-
-		usleep( msec * 1000 );
-	}
+#ifdef VITA
+			sceKernelDelayThread(msec * 1000);
 #else
-	if( msec < 0 )
-		msec = 10;
-
-	sceKernelDelayThread(msec * 1000);
+			usleep( msec * 1000 );
 #endif
+	}
 }
 
 /*
