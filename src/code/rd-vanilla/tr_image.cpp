@@ -717,7 +717,7 @@ static void Upload32( unsigned *data,
 		R_LightScaleTexture (data, width, height, (qboolean)!mipmap);
 
 	    qglTexImage2D (GL_TEXTURE_2D, 0, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-
+#ifndef VITA
 	    if (mipmap)
 	    {
 		    int		miplevel;
@@ -742,6 +742,7 @@ static void Upload32( unsigned *data,
 			    qglTexImage2D (GL_TEXTURE_2D, miplevel, *pformat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
 		    }
 	    }
+#endif
 	}
 	else
 	{
@@ -749,7 +750,7 @@ static void Upload32( unsigned *data,
 	}
 
 done:
-
+#ifndef VITA
 	if (mipmap)
 	{
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
@@ -760,6 +761,7 @@ done:
 		}
 	}
 	else
+#endif
 	{
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -777,8 +779,6 @@ public:
 typedef std::map <const char *, image_t *, CStringComparator>	AllocatedImages_t;
 AllocatedImages_t AllocatedImages;
 AllocatedImages_t::iterator itAllocatedImages;
-
-int giTextureBindNum = 1024;	// will be set to this anyway at runtime, but wtf?
 
 int R_Images_StartIteration(void)
 {
@@ -879,7 +879,6 @@ void R_Images_Clear(void)
 	}
 
 	AllocatedImages.clear();
-	giTextureBindNum = 1024;
 }
 
 
@@ -1031,7 +1030,7 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 
 	//image->imgfileSize=fileSize;
 
-	image->texnum = 1024 + giTextureBindNum++;	// ++ is of course staggeringly important...
+	glGenTextures( 1, &image->texnum );
 
 	// record which map it was used on...
 	//
