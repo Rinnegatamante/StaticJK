@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef VITA
 #include <vitasdk.h>
-#define SAMPLE_RATE   48000
+#define SAMPLE_RATE   44100
 #define AUDIOSIZE 16384
 
 SceRtcTick initial_tick;
@@ -42,7 +42,7 @@ uint8_t *audiobuffer;
 
 static int audio_thread(int args, void *argp)
 {
-	chn = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_MAIN, AUDIOSIZE / 2, SAMPLE_RATE, SCE_AUDIO_OUT_MODE_MONO);
+	chn = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, AUDIOSIZE / 2, SAMPLE_RATE, SCE_AUDIO_OUT_MODE_MONO);
 	sceAudioOutSetConfig(chn, -1, -1, -1);
 	int vol[] = {32767, 32767};
 	sceAudioOutSetVolume(chn, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
@@ -207,9 +207,6 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz)
 	}
 
 	sceRtcGetCurrentTick(&initial_tick);
-	snd_inited = qtrue;
-	
-	return qtrue;
 #else
 	SDL_AudioSpec desired;
 	SDL_AudioSpec obtained;
@@ -313,8 +310,8 @@ qboolean SNDDMA_Init(int sampleFrequencyInKHz)
 	SDL_PauseAudioDevice(dev, 0);  // start callback.
 
 	Com_Printf("SDL audio initialized.\n");
-	snd_inited = qtrue;
 #endif
+	snd_inited = qtrue;
 	return qtrue;
 }
 
