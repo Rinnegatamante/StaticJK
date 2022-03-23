@@ -33,7 +33,15 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sys/sys_local.h"
 #include "sdl_icon.h"
 
-
+#ifdef VITA
+uint16_t *indices;
+float *gVertexBuffer;
+uint8_t *gColorBuffer;
+float *gTexCoordBuffer;
+float *gVertexBufferPtr;
+uint8_t *gColorBufferPtr;
+float *gTexCoordBufferPtr;
+#endif
 
 enum rserr_t
 {
@@ -173,6 +181,10 @@ void WIN_Present( window_t *window )
 {
 #ifdef VITA
 	vglSwapBuffers(GL_FALSE);
+	vglIndexPointerMapped(indices);
+	gVertexBuffer = gVertexBufferPtr;
+	gColorBuffer = gColorBufferPtr;
+	gTexCoordBuffer = gTexCoordBufferPtr;
 #else
 	if ( window->api == GRAPHICS_API_OPENGL )
 	{
@@ -721,7 +733,21 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	glConfig->isFullscreen = qtrue;
 	
 	if (!inited) {
-		vglInitExtended(0xA00000, glConfig->vidWidth, glConfig->vidHeight, 0x1800000, SCE_GXM_MULTISAMPLE_4X);
+		vglInitExtended(0x100000, glConfig->vidWidth, glConfig->vidHeight, 0x100000, SCE_GXM_MULTISAMPLE_4X);
+		
+		indices = (uint16_t*)malloc(sizeof(uint16_t) * 4096);
+		for (uint16_t i = 0; i < 4096; i++){
+			indices[i] = i;
+		}
+		vglIndexPointerMapped(indices);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		gVertexBufferPtr = (float *)malloc(0x100000);
+		gColorBufferPtr = (uint8_t *)malloc(0x100000);
+		gTexCoordBufferPtr = (float *)malloc(0x100000);
+		gVertexBuffer = gVertexBufferPtr;
+		gColorBuffer = gColorBufferPtr;
+		gTexCoordBuffer = gTexCoordBufferPtr;
+	
 		inited = true;
 	}
 #else

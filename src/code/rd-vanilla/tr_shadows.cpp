@@ -100,12 +100,23 @@ void R_RenderShadowEdges( void ) {
 			//we are going to render all edges even though it is a tiny bit slower. -rww
 #if 1
 			i2 = edgeDefs[ i ][ j ].i2;
+#ifndef VITA
 			qglBegin( GL_TRIANGLE_STRIP );
 				qglVertex3fv( tess.xyz[ i ] );
 				qglVertex3fv( shadowXyz[ i ] );
 				qglVertex3fv( tess.xyz[ i2 ] );
 				qglVertex3fv( shadowXyz[ i2 ] );
 			qglEnd();
+#else
+			float vertices[] = {
+				tess.xyz[i][0], tess.xyz[i][1], tess.xyz[i][2],
+				shadowXyz[i][0], shadowXyz[i][1], shadowXyz[i][2],
+				tess.xyz[i2][0], tess.xyz[i2][1], tess.xyz[i2][2],
+				shadowXyz[i2][0], shadowXyz[i2][1], shadowXyz[i2][2]
+			};
+			vglVertexPointer( 3, GL_FLOAT, 0, 4, vertices );
+			vglDrawObjects(GL_TRIANGLE_STRIP, 4, GL_TRUE);
+#endif
 #else
 			hit[0] = 0;
 			hit[1] = 0;
@@ -150,7 +161,22 @@ void R_RenderShadowEdges( void ) {
 		o1 = tess.indexes[ i*3 + 0 ];
 		o2 = tess.indexes[ i*3 + 1 ];
 		o3 = tess.indexes[ i*3 + 2 ];
-
+#ifdef VITA
+		float vertices[] = {
+			tess.xyz[o1][0], tess.xyz[o1][1], tess.xyz[o1][2],
+			tess.xyz[o2][0], tess.xyz[o2][1], tess.xyz[o2][2],
+			tess.xyz[o3][0], tess.xyz[o3][1], tess.xyz[o3][2],
+		};
+		float vertices2[] = {
+			shadowXyz[o3][0], shadowXyz[o3][1], shadowXyz[o3][2],
+			shadowXyz[o2][0], shadowXyz[o2][1], shadowXyz[o2][2],
+			shadowXyz[o1][0], shadowXyz[o1][1], shadowXyz[o1][2],
+		};
+		vglVertexPointer( 3, GL_FLOAT, 0, 4, vertices );
+		vglDrawObjects(GL_TRIANGLES, 3, GL_TRUE);
+		vglVertexPointer( 3, GL_FLOAT, 0, 4, vertices2 );
+		vglDrawObjects(GL_TRIANGLES, 3, GL_TRUE);
+#else	
 		qglBegin(GL_TRIANGLES);
 			qglVertex3fv(tess.xyz[o1]);
 			qglVertex3fv(tess.xyz[o2]);
@@ -161,6 +187,7 @@ void R_RenderShadowEdges( void ) {
 			qglVertex3fv(shadowXyz[o2]);
 			qglVertex3fv(shadowXyz[o1]);
 		qglEnd();
+#endif
 	}
 #endif
 }
@@ -457,14 +484,23 @@ void RB_ShadowFinish( void ) {
 	qglColor4f( 0.0f, 0.0f, 0.0f, 0.5f );
 	//GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 	GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
-
+#ifndef VITA
 	qglBegin( GL_QUADS );
 	qglVertex3f( -100, 100, -10 );
 	qglVertex3f( 100, 100, -10 );
 	qglVertex3f( 100, -100, -10 );
 	qglVertex3f( -100, -100, -10 );
 	qglEnd ();
-
+#else
+	float vertices[] = {
+		-100,  100, -10,
+		 100,  100, -10,
+		 100, -100, -10,
+		-100, -100, -10
+	};
+	vglVertexPointer( 3, GL_FLOAT, 0, 4, vertices );
+	vglDrawObjects(GL_TRIANGLE_FAN, 4, GL_TRUE);
+#endif
 	qglColor4f(1,1,1,1);
 	qglDisable( GL_STENCIL_TEST );
 	if (planeZeroBack)

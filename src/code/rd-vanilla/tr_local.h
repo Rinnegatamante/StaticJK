@@ -31,8 +31,18 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "mdx_format.h"
 #include "qgl.h"
 
+#ifndef VITA
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
+#else
+#include <vitasdk.h>
+extern float *gVertexBuffer;
+extern uint8_t *gColorBuffer;
+extern float *gTexCoordBuffer;
+extern uint16_t *indices;
+#define GL_INDEX_TYPE		GL_UNSIGNED_SHORT
+typedef uint16_t glIndex_t;
+#endif
 
 extern refimport_t ri;
 
