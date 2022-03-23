@@ -881,6 +881,9 @@ int main(int argc, char **argv) {
 	SceUID crasher_thread = sceKernelCreateThread("crasher", crasher, 0x40, 0x1000, 0, 0, NULL);
     sceKernelStartThread(crasher_thread, 0, NULL);
 #endif
+#if 0
+	sceSysmoduleLoadModule(9);
+#endif
 	// Setting maximum clocks
 	scePowerSetArmClockFrequency(444);
 	scePowerSetBusClockFrequency(222);

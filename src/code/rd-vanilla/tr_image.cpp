@@ -691,7 +691,11 @@ static void Upload32( unsigned *data,
 	    else if ( samples == 4 )
 	    {
 		    if ( glConfig.textureCompression == TC_S3TC_DXT && allowTC)
-		    {	// Compress both alpha and color
+		    {
+#ifdef VITA
+				is_compressed = true;
+#endif
+				// Compress both alpha and color
 			    *pformat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		    }
 #ifndef VITA
