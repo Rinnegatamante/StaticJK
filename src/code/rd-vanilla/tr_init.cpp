@@ -287,7 +287,9 @@ static void GLW_InitTextureCompression( void )
 	// Check for available tc methods.
 	newer_tc = ri.GL_ExtensionSupported("GL_ARB_texture_compression") && ri.GL_ExtensionSupported("GL_EXT_texture_compression_s3tc");
 	old_tc = ri.GL_ExtensionSupported("GL_S3_s3tc");
-
+#ifdef VITA
+	newer_tc = true;
+#endif
 	if ( old_tc )
 	{
 		Com_Printf ("...GL_S3_s3tc available\n" );
@@ -1167,7 +1169,10 @@ void GL_SetDefaultState( void )
 
 	// initialize downstream texture unit if we're running
 	// in a multitexture environment
-	if ( qglActiveTextureARB ) {
+#ifndef VITA
+	if ( qglActiveTextureARB )
+#endif
+	{
 		GL_SelectTexture( 1 );
 		GL_TextureMode( r_textureMode->string );
 		GL_TexEnv( GL_MODULATE );
@@ -1560,8 +1565,11 @@ void R_Register( void )
 	r_DynamicGlowSoft = ri.Cvar_Get( "r_DynamicGlowSoft", "1", CVAR_ARCHIVE_ND );
 	r_DynamicGlowWidth = ri.Cvar_Get( "r_DynamicGlowWidth", "320", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	r_DynamicGlowHeight = ri.Cvar_Get( "r_DynamicGlowHeight", "240", CVAR_ARCHIVE_ND | CVAR_LATCH );
-
+#ifdef VITA
+	r_picmip = ri.Cvar_Get ("r_picmip", "3", CVAR_ARCHIVE | CVAR_LATCH );
+#else
 	r_picmip = ri.Cvar_Get ("r_picmip", "0", CVAR_ARCHIVE | CVAR_LATCH );
+#endif
 	ri.Cvar_CheckRange( r_picmip, 0, 16, qtrue );
 	r_colorMipLevels = ri.Cvar_Get ("r_colorMipLevels", "0", CVAR_LATCH );
 	r_detailTextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE_ND | CVAR_LATCH );
