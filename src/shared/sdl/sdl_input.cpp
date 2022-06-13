@@ -1145,6 +1145,7 @@ static void IN_JoyMove( void )
 }
 
 #ifdef VITA
+static int hires_x, hires_y;
 uint32_t oldkeys, oldanalogs;
 
 void Sys_SetKeys(uint32_t keys) {
@@ -1174,6 +1175,30 @@ void Sys_SetKeys(uint32_t keys) {
 		Sys_QueEvent(0, SE_KEY, A_AUX6, (keys & SCE_CTRL_RTRIGGER) == SCE_CTRL_RTRIGGER, 0, NULL);
 }
 
+void IN_RescaleAnalog(int *x, int *y, int dead) {
+
+	float analogX = (float) *x;
+	float analogY = (float) *y;
+	float deadZone = (float) dead;
+	float maximum = 32768.0f;
+	float magnitude = sqrt(analogX * analogX + analogY * analogY);
+	if (magnitude >= deadZone)
+	{
+		float scalingFactor = maximum / magnitude * (magnitude - deadZone) / (maximum - deadZone);
+		*x = (int) (analogX * scalingFactor);
+		*y = (int) (analogY * scalingFactor);
+	} else {
+		*x = 0;
+		*y = 0;
+	}
+}
+
+// Left analog virtual values
+#define LANALOG_LEFT  0x01
+#define LANALOG_RIGHT 0x02
+#define LANALOG_UP    0x04
+#define LANALOG_DOWN  0x08
+
 int old_x = - 1, old_y;
 #endif
 
@@ -1193,6 +1218,38 @@ void IN_Frame (void) {
 		old_x = touch.report[0].x;
 		old_y = touch.report[0].y;
 	}else old_x = -1;
+	
+	// Emulating mouse with right analog
+	int right_x = (keys.rx - 127) * 256;
+	int right_y = (keys.ry - 127) * 256;
+	IN_RescaleAnalog(&right_x, &right_y, 7680);
+	hires_x += right_x;
+	hires_y += right_y;
+	if (hires_x != 0 || hires_y != 0) {
+		// increase slowdown variable to slow down aiming, could be made user-adjustable
+		int slowdown = 1024;
+		Sys_QueEvent(0, SE_MOUSE, hires_x / slowdown, hires_y / slowdown, 0, NULL);
+		hires_x %= slowdown;
+		hires_y %= slowdown;
+	}
+	
+	// Emulating keys with left analog (TODO: Replace this dirty hack with a serious implementation)
+	uint32_t virt_buttons = 0x00;
+	if (keys.lx < 80) virt_buttons += LANALOG_LEFT;
+	else if (keys.lx > 160) virt_buttons += LANALOG_RIGHT;
+	if (keys.ly < 80) virt_buttons += LANALOG_UP;
+	else if (keys.ly > 160) virt_buttons += LANALOG_DOWN;
+	if (virt_buttons != oldanalogs){
+		if((virt_buttons & LANALOG_LEFT) != (oldanalogs & LANALOG_LEFT))
+			Sys_QueEvent(0, SE_KEY, A_AUX11, (virt_buttons & LANALOG_LEFT) == LANALOG_LEFT, 0, NULL);
+		if((virt_buttons & LANALOG_RIGHT) != (oldanalogs & LANALOG_RIGHT))
+			Sys_QueEvent(0, SE_KEY, A_AUX12, (virt_buttons & LANALOG_RIGHT) == LANALOG_RIGHT, 0, NULL);
+		if((virt_buttons & LANALOG_UP) != (oldanalogs & LANALOG_UP))
+			Sys_QueEvent(0, SE_KEY, A_AUX13, (virt_buttons & LANALOG_UP) == LANALOG_UP, 0, NULL);
+		if((virt_buttons & LANALOG_DOWN) != (oldanalogs & LANALOG_DOWN))
+			Sys_QueEvent(0, SE_KEY, A_AUX14, (virt_buttons & LANALOG_DOWN) == LANALOG_DOWN, 0, NULL);
+	}
+	oldanalogs = virt_buttons;
 #else
 	qboolean loading;
 
