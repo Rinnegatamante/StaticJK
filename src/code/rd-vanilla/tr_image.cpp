@@ -1028,9 +1028,8 @@ image_t *R_CreateImage( const char *name, const byte *pic, int width, int height
 	if (strlen(name) >= MAX_QPATH ) {
 		Com_Error (ERR_DROP, "R_CreateImage: \"%s\" is too long\n", name);
 	}
-#ifndef VITA
+
 	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP)
-#endif
 		glWrapClampMode = GL_CLAMP_TO_EDGE;
 
 	if (name[0] == '$')
