@@ -28,7 +28,6 @@ include_directories(./src/lib/minizip/include)
 add_compile_definitions(ARCH_STRING="x86_64")
 add_compile_definitions(SP_GAME)
 add_compile_definitions(_JK2EXE)
-add_compile_definitions(_DEBUG)
 
 if (CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     add_compile_definitions(__linux__)
@@ -511,8 +510,8 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 set(VITA_APP_NAME "StaticJK: Jedi Academy")
 set(VITA_TITLEID  "STATICJK1")
 set(VITA_VERSION  "01.00")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I./src -I$(VITASDK)/arm-vita-eabi/include/SDL2 -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fsigned-char -fno-short-enums")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I./src -I$(VITASDK)/arm-vita-eabi/include/SDL2 -D__GNU_VISIBLE -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fpermissive -fsigned-char -fno-short-enums")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I./src -I$(VITASDK)/arm-vita-eabi/include/SDL2 -DFINAL_BUILD -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fsigned-char -fno-short-enums")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I./src -I$(VITASDK)/arm-vita-eabi/include/SDL2 -DFINAL_BUILD -D__GNU_VISIBLE -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fpermissive -fsigned-char -fno-short-enums")
 
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     target_link_libraries(${PROJECT_NAME}.elf
@@ -522,6 +521,8 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
 		z
 		vitaGL
 		vitashark
+		SceShaccCgExt
+		taihen_stub
 		SceDisplay_stub
 		SceGxm_stub
 		SceSysmodule_stub
