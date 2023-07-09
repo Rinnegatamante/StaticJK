@@ -27,6 +27,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "tr_local.h"
 
+#ifdef NEON
+#include <arm_neon.h>
+#endif
+
 /*
 
   THIS ENTIRE FILE IS BACK END
@@ -1215,11 +1219,13 @@ static void LerpMeshVertexes (md3Surface_t *surf, float backlerp)
 			newXyz += 4, newNormals += 4,
 			outXyz += 4, outNormal += 4)
 		{
-
+			#ifdef NEON
+			vst1q_f32(outXyz, vmulq_n_f32(vcvtq_f32_s32(vmovl_s16(vld1_s16(newXyz))), newXyzScale));
+			#else
 			outXyz[0] = newXyz[0] * newXyzScale;
 			outXyz[1] = newXyz[1] * newXyzScale;
 			outXyz[2] = newXyz[2] * newXyzScale;
-
+			#endif
 			lat = ( newNormals[0] >> 8 ) & 0xff;
 			lng = ( newNormals[0] & 0xff );
 			lat *= (FUNCTABLE_SIZE/256);
@@ -1250,9 +1256,14 @@ static void LerpMeshVertexes (md3Surface_t *surf, float backlerp)
 			vec3_t uncompressedOldNormal, uncompressedNewNormal;
 
 			// interpolate the xyz
+			#ifdef NEON
+			vst1q_f32(outXyz, vaddq_f32(vmulq_n_f32(vcvtq_f32_s32(vmovl_s16(vld1_s16(newXyz))), newXyzScale),
+										vmulq_n_f32(vcvtq_f32_s32(vmovl_s16(vld1_s16(oldXyz))), oldXyzScale)));
+			#else
 			outXyz[0] = oldXyz[0] * oldXyzScale + newXyz[0] * newXyzScale;
 			outXyz[1] = oldXyz[1] * oldXyzScale + newXyz[1] * newXyzScale;
 			outXyz[2] = oldXyz[2] * oldXyzScale + newXyz[2] * newXyzScale;
+			#endif
 
 			// FIXME: interpolate lat/long instead?
 			lat = ( newNormals[0] >> 8 ) & 0xff;

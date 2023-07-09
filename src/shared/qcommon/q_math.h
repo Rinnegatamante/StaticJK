@@ -24,6 +24,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "q_platform.h"
 
+#ifdef NEON
+#include <arm_neon.h>
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
@@ -73,6 +76,77 @@ int   irand( int min, int max );
 
 float erandom( float mean );
 
+#ifdef NEON
+// for neon use
+
+inline float32_t sum3() {           
+        register float32x4_t v asm ("q0");
+        float32_t ret;
+
+        asm volatile(
+        "vadd.f32       s0, s1\n"
+        "vadd.f32       s0, s2\n"
+        "vmov           %[ret], s0\n"
+        : [ret] "=r" (ret)
+        :
+        :);
+
+        return ret;
+// non asm version should be
+//float32x2_t r = vadd_f32(vget_high_f32(input), vget_low_f32(input));
+//return vget_lane_f32(vpadd_f32(r, r), 0); // vpadd adds adjacent elements
+}
+#endif
+
+#ifndef NEON
+float Q_rsqrt( float number );
+#else
+inline float Q_rsqrt( float f ) {
+ float ret;
+/* 	float32x2_t a,b;
+	float res[2];
+	a=vdup_n_f32(number);
+	b=a;
+	a=vrsqrte_f32(a);
+	a=vmul_f32(a,vrsqrts_f32(b, vmul_f32(a,a)));
+//	b=vmul_f32(a,vrsqrts_f32(b, vmul_f32(a,a)));
+
+	vst1_f32(res, a);
+	return res[0];*/
+ asm volatile (
+	"vmov.32		s0, %1		\n\t"
+	"vdup.32		d0, d0[0]	\n\t"
+	"vmov.64		d1, d0		\n\t"
+	"vrsqrte.f32	d0, d0		\n\t"
+	"vmul.f32		d2, d0, d0	\n\t"
+	"vrsqrts.f32	d1, d1, d2	\n\t"
+	"vmul.f32		d0, d0, d1	\n\t"
+	
+	"vmov.32		%0, s0		\n\t"
+	:"+&r" (ret), "+&r" (f)
+	:
+	:"d0", "d1", "d2"
+ );
+ return ret;
+}
+inline float SQRTFAST( float y )
+{
+	float32x2_t a,b;
+	float res[2];
+	a=vdup_n_f32(y);
+	b=a;
+	a=vrsqrte_f32(a);
+//	a=vmul_f32(a,vrsqrts_f32(b, vmul_f32(a,a)));
+	b=vmul_f32(a,vrsqrts_f32(b, vmul_f32(a,a)));
+
+	a=vrecpe_f32(b);
+	a=vmul_f32(a,vrecps_f32(b, a));
+//	a=vmul_f32(a,vrecps_f32(b, a));
+
+	vst1_f32(res, a);
+	return res[0];
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -112,7 +186,6 @@ float Com_Clamp( float min, float max, float value );
 int Com_AbsClampi( int min, int max, int value );
 float Com_AbsClamp( float min, float max, float value );
 
-float Q_rsqrt( float number );
 float Q_fabs( float f );
 
 float Q_acos(float c);
@@ -246,20 +319,98 @@ extern vec3_t vec3_origin;
 void VectorAdd( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut );
 void VectorSubtract( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut );
 void VectorScale( const vec3_t vecIn, float scale, vec3_t vecOut );
+#ifdef NEON
+inline void VectorMA( const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc) {
+        asm volatile (
+        "vld1.32                {d0}, [%0]                  \n\t"   //d0={x0,y0}
+        "flds                   s2, [%0, #8]	            		\n\t"   //d1[0]={z0}
+        "vld1.32                {d2}, [%2]                      \n\t"   //d2={x1,y1}
+        "flds                   s6, [%2, #8] 	  				\n\t"   //d3[0]={z1}
+		"vmov.32				s8, %1							\n\t"
+        "vdup.f32				d4, d4[0]						\n\t"	//d4=scale
+        
+        "vmla.f32				d0, d2, d4						\n\t"
+        "vmla.f32				d1, d3, d4						\n\t"
+        "vst1.32				d0, [%3]						\n\t"
+        "fsts                   s2, [%3, #8]                       \n\t"   //
+		: "+&r"(veca), "+&r"(scale), "+&r"(vecb), "+&r" (vecc):
+		: "d0", "d1", "d2", "d3", "d4", "memory"        
+		);
+}
+#else
 void VectorMA( const vec3_t vec1, float scale, const vec3_t vec2, vec3_t vecOut );
+#endif
 void VectorSet( vec3_t vec, float x, float y, float z );
 void VectorClear( vec3_t vec );
 void VectorCopy( const vec3_t vecIn, vec3_t vecOut );
 float VectorLength( const vec3_t vec );
 float VectorLengthSquared( const vec3_t vec );
+#ifdef NEON
+inline void VectorNormalizeFast( vec3_t v )
+{
+        asm volatile (
+        "vld1.32                {d4}, [%0]                      \n\t"   //d4={x0,y0}
+        "flds                   s10, [%0, #8]                   \n\t"   //d5[0]={z0}
+
+        "vmul.f32               d0, d4, d4                      \n\t"   //d0= d4*d4
+        "vpadd.f32              d0, d0                          \n\t"   //d0 = d[0] + d[1]
+        "vmla.f32               d0, d5, d5                      \n\t"   //d0 = d0 + d5*d5 
+        
+        "vmov.f32               d1, d0                          \n\t"   //d1 = d0
+        "vrsqrte.f32    		d0, d0                          \n\t"   //d0 = ~ 1.0 / sqrt(d0)
+        "vmul.f32               d2, d0, d1                      \n\t"   //d2 = d0 * d1
+        "vrsqrts.f32    		d3, d2, d0                      \n\t"   //d3 = (3 - d0 * d2) / 2        
+        "vmul.f32               d0, d0, d3                      \n\t"   //d0 = d0 * d3
+        "vmul.f32               d2, d0, d1                      \n\t"   //d2 = d0 * d1  
+        "vrsqrts.f32    		d3, d2, d0                      \n\t"   //d4 = (3 - d0 * d3) / 2        
+        "vmul.f32               d0, d0, d3                      \n\t"   //d0 = d0 * d4  
+
+        "vmul.f32               q2, q2, d0[0]                   \n\t"   //d0= d2*d4
+        "vst1.32                d4, [%0]                      	\n\t"   //
+        "fsts                   s10, [%0, #8]                   \n\t"   //
+        
+        :"+&r"(v): 
+    : "d0", "d1", "d2", "d3", "d4", "d5", "memory"
+        );
+}
+#else
 void VectorNormalizeFast( vec3_t vec );
+#endif
 float VectorNormalize( vec3_t vec );
 float VectorNormalize2( const vec3_t vec, vec3_t vecOut );
 void VectorAdvance( const vec3_t veca, const float scale, const vec3_t vecb, vec3_t vecc);
 void VectorInc( vec3_t vec );
 void VectorDec( vec3_t vec );
 void VectorInverse( vec3_t vec );
+#ifdef NEON
+inline void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
+        asm volatile (
+        "flds                   s3, [%0]                        \n\t"   //d1[1]={x0}
+        "add                    %0, %0, #4                      \n\t"   //
+        "vld1.32                {d0}, [%0]                      \n\t"   //d0={y0,z0}
+        "vmov.f32               s2, s1                          \n\t"   //d1[0]={z0}
+
+        "flds                   s5, [%1]                        \n\t"   //d2[1]={x1}
+        "add                    %1, %1, #4                      \n\t"   //
+        "vld1.32                {d3}, [%1]                      \n\t"   //d3={y1,z1}
+        "vmov.f32               s4, s7                          \n\t"   //d2[0]=d3[1]
+        
+        "vmul.f32               d4, d0, d2                      \n\t"   //d4=d0*d2
+        "vmls.f32               d4, d1, d3                      \n\t"   //d4-=d1*d3
+        
+        "vmul.f32               d5, d3, d1[1]           		\n\t"   //d5=d3*d1[1]
+        "vmls.f32               d5, d0, d2[1]          		 	\n\t"   //d5-=d0*d2[1]
+        
+        "vst1.32                d4, [%2]                        \n\t"   //
+        "fsts                   s10, [%2, #8]                       \n\t"   //
+        
+        : "+&r"(v1), "+&r"(v2), "+&r"(cross):
+		: "d0", "d1", "d2", "d3", "d4", "d5", "memory"
+        );
+}
+#else
 void CrossProduct( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut );
+#endif
 float DotProduct( const vec3_t vec1, const vec3_t vec2 );
 qboolean VectorCompare( const vec3_t vec1, const vec3_t vec2 );
 qboolean VectorCompare2( const vec3_t v1, const vec3_t v2 );
