@@ -404,6 +404,7 @@ IN_GobbleMotionEvents
 */
 static void IN_GobbleMotionEvents( void )
 {
+#ifndef __vita__
 	SDL_Event dummy[ 1 ];
 	int val = 0;
 
@@ -414,6 +415,7 @@ static void IN_GobbleMotionEvents( void )
 
 	if ( val < 0 )
 		Com_Printf( "IN_GobbleMotionEvents failed: %s\n", SDL_GetError( ) );
+#endif
 }
 
 /*
@@ -423,6 +425,7 @@ IN_ActivateMouse
 */
 static void IN_ActivateMouse( void )
 {
+#ifndef __vita__
 	if (!mouseAvailable || !SDL_WasInit( SDL_INIT_VIDEO ) )
 		return;
 
@@ -447,7 +450,7 @@ static void IN_ActivateMouse( void )
 			in_nograb->modified = qfalse;
 		}
 	}
-
+#endif
 	mouseActive = qtrue;
 }
 
@@ -458,6 +461,7 @@ IN_DeactivateMouse
 */
 static void IN_DeactivateMouse( void )
 {
+#ifndef __vita__
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 		return;
 
@@ -482,6 +486,7 @@ static void IN_DeactivateMouse( void )
 
 		mouseActive = qfalse;
 	}
+#endif
 }
 
 // We translate axes movement into keypresses
@@ -525,6 +530,7 @@ IN_InitJoystick
 */
 static void IN_InitJoystick( void )
 {
+#ifndef __vita__
 	int i = 0;
 	int total = 0;
 	char buf[16384] = "";
@@ -589,6 +595,7 @@ static void IN_InitJoystick( void )
 	Com_DPrintf( "Threshold: %f\n", in_joystickThreshold->value );
 
 	SDL_JoystickEventState(SDL_QUERY);
+#endif
 }
 
 void IN_Init( void *windowData )
@@ -810,6 +817,7 @@ IN_ProcessEvents
 void SNDDMA_Activate( qboolean activate );
 static void IN_ProcessEvents( void )
 {
+#ifndef __vita__
 	SDL_Event e;
 	fakeAscii_t key = A_NULL;
 	static fakeAscii_t lastKeyDown = A_NULL;
@@ -938,6 +946,7 @@ static void IN_ProcessEvents( void )
 				break;
 		}
 	}
+#endif
 }
 
 /*
@@ -947,6 +956,7 @@ IN_JoyMove
 */
 static void IN_JoyMove( void )
 {
+#ifndef VITA
 	unsigned int axes = 0;
 	unsigned int hats = 0;
 	int total = 0;
@@ -956,7 +966,7 @@ static void IN_JoyMove( void )
 		return;
 
 	SDL_JoystickUpdate();
-#ifndef VITA
+
 	// update the ball state.
 	total = SDL_JoystickNumBalls(stick);
 	if (total > 0)
@@ -1088,7 +1098,7 @@ static void IN_JoyMove( void )
 
 	// save hat state
 	stick_state.oldhats = hats;
-#endif
+
 	// finally, look at the axes...
 	total = SDL_JoystickNumAxes(stick);
 	if (total > 0)
@@ -1142,6 +1152,7 @@ static void IN_JoyMove( void )
 
 	/* Save for future generations. */
 	stick_state.oldaxes = axes;
+#endif
 }
 
 #ifdef VITA
@@ -1287,6 +1298,7 @@ IN_ShutdownJoystick
 */
 static void IN_ShutdownJoystick( void )
 {
+#ifndef __vita__
 	if ( !SDL_WasInit( SDL_INIT_JOYSTICK ) )
 		return;
 
@@ -1297,9 +1309,11 @@ static void IN_ShutdownJoystick( void )
 	}
 
 	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
+#endif
 }
 
 void IN_Shutdown( void ) {
+#ifndef __vita__
 	SDL_StopTextInput( );
 
 	IN_DeactivateMouse( );
@@ -1308,6 +1322,7 @@ void IN_Shutdown( void ) {
 	IN_ShutdownJoystick( );
 
 	SDL_window = NULL;
+#endif
 }
 
 /*
@@ -1317,6 +1332,8 @@ IN_Restart
 */
 void IN_Restart( void )
 {
+#ifndef __vita__
 	IN_ShutdownJoystick( );
 	IN_Init( SDL_window );
+#endif
 }

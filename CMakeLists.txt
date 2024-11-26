@@ -525,6 +525,8 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
 		taihen_stub
 		SceDisplay_stub
 		SceGxm_stub
+		SceIme_stub
+		SceAudioIn_stub
 		SceSysmodule_stub
 		SceCommonDialog_stub
 		SceKernelThreadMgr_stub
