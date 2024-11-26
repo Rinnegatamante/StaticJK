@@ -356,7 +356,7 @@ float Com_AbsClamp( float min, float max, float value )
 	}
 }
 
-#ifndef NEON
+
 float Q_rsqrt( float number )
 {
 	byteAlias_t t;
@@ -374,7 +374,7 @@ float Q_rsqrt( float number )
 	assert( !Q_isnan(y) );
 	return y;
 }
-#endif
+
 float Q_fabs( float f )
 {
 	byteAlias_t fi;
@@ -1092,14 +1092,13 @@ void VectorScale( const vec3_t vecIn, float scale, vec3_t vecOut )
 	vecOut[2] = vecIn[2]*scale;
 }
 
-#ifndef NEON
 void VectorMA( const vec3_t vec1, float scale, const vec3_t vec2, vec3_t vecOut )
 {
 	vecOut[0] = vec1[0] + scale*vec2[0];
 	vecOut[1] = vec1[1] + scale*vec2[1];
 	vecOut[2] = vec1[2] + scale*vec2[2];
 }
-#endif
+
 void VectorSet( vec3_t vec, float x, float y, float z )
 {
 	vec[0]=x; vec[1]=y; vec[2]=z;
@@ -1145,7 +1144,6 @@ float DistanceSquared( const vec3_t p1, const vec3_t p2 )
 
 // fast vector normalize routine that does not check to make sure
 // that length != 0, nor does it return length, uses rsqrt approximation
-#ifndef NEON
 void VectorNormalizeFast( vec3_t vec )
 {
 	float ilength;
@@ -1156,7 +1154,7 @@ void VectorNormalizeFast( vec3_t vec )
 	vec[1] *= ilength;
 	vec[2] *= ilength;
 }
-#endif
+
 float VectorNormalize( vec3_t vec )
 {
 	float	length, ilength;
@@ -1212,13 +1210,12 @@ void VectorInverse( vec3_t vec ) {
 	vec[0] = -vec[0]; vec[1] = -vec[1]; vec[2] = -vec[2];
 }
 
-#ifndef NEON
 void CrossProduct( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut ) {
 	vecOut[0] = vec1[1]*vec2[2] - vec1[2]*vec2[1];
 	vecOut[1] = vec1[2]*vec2[0] - vec1[0]*vec2[2];
 	vecOut[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
 }
-#endif
+
 float DotProduct( const vec3_t vec1, const vec3_t vec2 ) {
 	return vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2];
 }

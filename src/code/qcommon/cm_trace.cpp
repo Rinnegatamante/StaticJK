@@ -22,9 +22,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "cm_local.h"
-#ifdef NEON
-#include "../game/neon_math.h"
-#endif
 
 /*
 ===============================================================================

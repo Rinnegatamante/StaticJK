@@ -24,10 +24,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "cm_local.h"
 #include "cm_patch.h"
 
-#ifdef NEON
-#include "../game/neon_math.h"
-#endif
-
 //#define	CULL_BBOX
 
 /*
@@ -1424,15 +1420,9 @@ void CM_TracePointThroughPatchCollide( traceWork_t *tw, const struct patchCollid
 	// determine the trace's relationship to all planes
 	planes = pc->planes;
 	for ( i = 0 ; i < pc->numPlanes ; i++, planes++ ) {
-		#ifdef NEON
-		offset = DotProductNeon( tw->offsets[ planes->signbits ], planes->plane );
-		d1 = DotProductNeon( tw->start, planes->plane )/* - planes->plane[3] + offset*/;
-		d2 = d1 - DotProductNeon( tw->end, planes->plane )/* - planes->plane[3] + offset*/;
-		#else
 		offset = DotProduct( tw->offsets[ planes->signbits ], planes->plane );
-		d1 = DotProduct( tw->start, planes->plane )/* - planes->plane[3] + offset*/;
-		d2 = d1 - DotProduct( tw->end, planes->plane )/* - planes->plane[3] + offset*/;
-		#endif
+		d1 = DotProduct( tw->start, planes->plane ) - planes->plane[3] + offset;
+		d2 = DotProduct( tw->end, planes->plane ) - planes->plane[3] + offset;
 		if ( d1 <= 0 ) {
 			frontFacing[i] = qfalse;
 		} else {
