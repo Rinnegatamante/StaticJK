@@ -32,7 +32,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sys_public.h"
 #include "con_local.h"
 
-#define HAVE_PROFILER
+//#define HAVE_PROFILER
 #ifdef HAVE_PROFILER
 #include <vitagprof.h>
 #endif
