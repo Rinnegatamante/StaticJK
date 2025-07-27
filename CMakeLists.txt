@@ -510,11 +510,12 @@ include("${VITASDK}/share/vita.cmake" REQUIRED)
 set(VITA_APP_NAME "StaticJK: Jedi Academy")
 set(VITA_TITLEID  "STATICJK1")
 set(VITA_VERSION  "01.00")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I./src -I$(VITASDK)/arm-vita-eabi/include/SDL2 -DFINAL_BUILD -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fsigned-char -fno-short-enums")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I./src -I$(VITASDK)/arm-vita-eabi/include/SDL2 -DFINAL_BUILD -D__GNU_VISIBLE -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fpermissive -fsigned-char -fno-short-enums")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I./src -flto -I$(VITASDK)/arm-vita-eabi/include/SDL2 -DNDEBUG -DFINAL_BUILD -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fsigned-char -fno-short-enums")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I./src -flto -I$(VITASDK)/arm-vita-eabi/include/SDL2 -DNDEBUG -DFINAL_BUILD -D__GNU_VISIBLE -D__FLOAT_WORD_ORDER=1 -DVITA -D__linux__ -DGIT_VERSION=\"${GIT_HASH}\" -g -O3 -mfpu=neon -fno-optimize-sibling-calls -fsingle-precision-constant -march=armv7-a -mtune=cortex-a9 -mfloat-abi=hard -ffast-math -fpermissive -fsigned-char -fno-short-enums")
 
 if (NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     target_link_libraries(${PROJECT_NAME}.elf
+		vitagprof
 		SDL2
 		jpeg
 		png
@@ -573,7 +574,7 @@ else ()
     set_target_properties(${PROJECT_NAME}.elf PROPERTIES LINK_FLAGS "-s USE_SDL=2")
 endif ()
 
-vita_create_self(${PROJECT_NAME}.self ${PROJECT_NAME}.elf UNSAFE)
+vita_create_self(${PROJECT_NAME}.self ${PROJECT_NAME}.elf UNSAFE NOASLR)
 	
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 vita_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self

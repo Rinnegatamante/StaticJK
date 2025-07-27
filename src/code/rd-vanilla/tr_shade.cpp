@@ -2276,6 +2276,7 @@ void RB_EndSurface( void ) {
 		}
 	}
 
+#ifndef __vita__
 	//
 	// update performance counters
 	//
@@ -2294,12 +2295,14 @@ void RB_EndSurface( void ) {
 			backEnd.pc.c_totalIndexes += tess.numIndexes;
 		}
 	}
+#endif
 
 	//
 	// call off to shader specific tess end function
 	//
 	tess.currentStageIteratorFunc();
 
+#ifndef __vita__
 	//
 	// draw debugging stuff
 	//
@@ -2311,10 +2314,12 @@ void RB_EndSurface( void ) {
 	if ( r_shownormals->integer ) {
 		DrawNormals (input);
 	}
+#endif
 
 	// clear shader so we can tell we don't have any unclosed surfaces
 	tess.numIndexes = 0;
-
+#ifndef __vita__
 	GLimp_LogComment( "----------\n" );
+#endif
 }
 
