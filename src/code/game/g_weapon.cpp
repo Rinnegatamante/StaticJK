@@ -489,11 +489,12 @@ void CalcMuzzlePoint( gentity_t *const ent, vec3_t forwardVec, vec3_t right, vec
 		ViewHeightFix(ent);
 		muzzlePoint[2] += ent->client->ps.viewheight;//By eyes
 		muzzlePoint[2] -= 1;
-		if ( ent->s.number == 0 )
+		if ( ent->s.number == 0 ) {
 			VectorMA( muzzlePoint, 12, forwardVec, muzzlePoint ); // player, don't set this any lower otherwise the projectile will impact immediately when your back is to a wall
-		else
+		} else {
 			VectorMA( muzzlePoint, 2, forwardVec, muzzlePoint ); // NPC, don't set too far forwardVec otherwise the projectile can go through doors
-
+		}
+		
 		VectorMA( muzzlePoint, 1, vrightVec, muzzlePoint );
 		break;
 

@@ -287,6 +287,7 @@ float erandom( float mean )
 //      MATH UTILITIES
 //
 ///////////////////////////////////////////////////////////////////////////
+#ifndef __vita__
 signed char ClampChar( int i )
 {
 	if ( i < -128 ) {
@@ -355,7 +356,7 @@ float Com_AbsClamp( float min, float max, float value )
 		return Com_Clamp( min, max, value );
 	}
 }
-
+#endif
 
 float Q_rsqrt( float number )
 {
@@ -1071,6 +1072,7 @@ void VectorCopy2( const vec2_t vecIn, vec2_t vecOut )
 ///////////////////////////////////////////////////////////////////////////
 vec3_t		vec3_origin = {0,0,0};
 
+#ifndef __vita__
 void VectorAdd( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut )
 {
 	vecOut[0] = vec1[0]+vec2[0];
@@ -1125,6 +1127,7 @@ float VectorLengthSquared( const vec3_t vec )
 {
 	return (vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
 }
+#endif
 
 float Distance( const vec3_t p1, const vec3_t p2 )
 {
@@ -1216,9 +1219,11 @@ void CrossProduct( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut ) {
 	vecOut[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
 }
 
+#ifndef __vita__
 float DotProduct( const vec3_t vec1, const vec3_t vec2 ) {
 	return vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2];
 }
+#endif
 
 qboolean VectorCompare( const vec3_t vec1, const vec3_t vec2 )
 {

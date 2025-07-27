@@ -24,6 +24,10 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "q_platform.h"
 
+#ifdef __vita__
+#include <vitasdk.h>
+#include <math.h>
+#endif
 
 #if defined(__cplusplus)
 extern "C" {
@@ -99,18 +103,81 @@ static __inline long Q_ftol( float f )
 	return (long)f;
 }
 #else
-static inline long Q_ftol( float f )
-{
-	return (long)f;
-}
+#define Q_ftol(f) ((long)(f))
 #endif
 
+#ifdef __vita__
+static inline __attribute__((always_inline)) signed char ClampChar( int i )
+{
+	if ( i < -128 ) {
+		return -128;
+	}
+	if ( i > 127 ) {
+		return 127;
+	}
+	return i;
+}
+static inline __attribute__((always_inline)) signed short ClampShort( int i )
+{
+	if ( i < -32768 ) {
+		return -32768;
+	}
+	if ( i > 0x7fff ) {
+		return 0x7fff;
+	}
+	return i;
+}
+static inline __attribute__((always_inline)) int Com_Clampi( int min, int max, int value )
+{
+	if ( value < min )
+	{
+		return min;
+	}
+	if ( value > max )
+	{
+		return max;
+	}
+	return value;
+}
+static inline __attribute__((always_inline)) float Com_Clamp( float min, float max, float value ) {
+	if ( value < min ) {
+		return min;
+	}
+	if ( value > max ) {
+		return max;
+	}
+	return value;
+}
+static inline __attribute__((always_inline)) int Com_AbsClampi( int min, int max, int value )
+{
+	if( value < 0 )
+	{
+		return Com_Clampi( -max, -min, value );
+	}
+	else
+	{
+		return Com_Clampi( min, max, value );
+	}
+}
+static inline __attribute__((always_inline)) float Com_AbsClamp( float min, float max, float value )
+{
+	if( value < 0.0f )
+	{
+		return Com_Clamp( -max, -min, value );
+	}
+	else
+	{
+		return Com_Clamp( min, max, value );
+	}
+}
+#else
 signed char ClampChar( int i );
 signed short ClampShort( int i );
 int Com_Clampi( int min, int max, int value );
 float Com_Clamp( float min, float max, float value );
 int Com_AbsClampi( int min, int max, int value );
 float Com_AbsClamp( float min, float max, float value );
+#endif
 
 float Q_rsqrt( float number );
 float Q_fabs( float f );
@@ -213,8 +280,13 @@ extern vec2_t vec3_zero;
 #define VectorCopy2M(src, dst) \
 	(dst)[0] = (src[0]), \
 	(dst)[1] = (src[1])
+#ifdef __vita__
+#define VectorClear2M(dst) \
+	sceClibMemset((dst), 0, sizeof((dst)[0]) * 2)
+#else
 #define VectorClear2M(dst) \
 	memset((dst), 0, sizeof((dst)[0]) * 2)
+#endif
 
 void VectorAdd2( const vec2_t vec1, const vec2_t vec2, vec2_t vecOut );
 void VectorSubtract2( const vec2_t vec1, const vec2_t vec2, vec2_t vec2_t );
@@ -243,6 +315,46 @@ extern vec3_t vec3_origin;
 #define VectorClearM(dst) \
 	memset((dst), 0, sizeof((dst)[0]) * 3)
 
+#ifdef __vita__
+static inline __attribute__((always_inline)) void VectorAdd( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut )
+{
+	vecOut[0] = vec1[0]+vec2[0];
+	vecOut[1] = vec1[1]+vec2[1];
+	vecOut[2] = vec1[2]+vec2[2];
+}
+static inline __attribute__((always_inline)) void VectorSubtract( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut )
+{
+	vecOut[0] = vec1[0]-vec2[0];
+	vecOut[1] = vec1[1]-vec2[1];
+	vecOut[2] = vec1[2]-vec2[2];
+}
+static inline __attribute__((always_inline)) void VectorScale( const vec3_t vecIn, float scale, vec3_t vecOut )
+{
+	vecOut[0] = vecIn[0]*scale;
+	vecOut[1] = vecIn[1]*scale;
+	vecOut[2] = vecIn[2]*scale;
+}
+static inline __attribute__((always_inline)) void VectorMA( const vec3_t vec1, float scale, const vec3_t vec2, vec3_t vecOut )
+{
+	vecOut[0] = vec1[0] + scale*vec2[0];
+	vecOut[1] = vec1[1] + scale*vec2[1];
+	vecOut[2] = vec1[2] + scale*vec2[2];
+}
+static inline __attribute__((always_inline)) void VectorSet( vec3_t vec, float x, float y, float z )
+{
+	vec[0]=x; vec[1]=y; vec[2]=z;
+}
+#define VectorClear(x) sceClibMemset(x, 0, sizeof(vec3_t))
+#define VectorCopy(x, y) sceClibMemcpy(y, x, sizeof(vec3_t))
+static inline __attribute__((always_inline)) float VectorLength( const vec3_t vec )
+{
+	return sqrtf( vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2] );
+}
+static inline __attribute__((always_inline)) float VectorLengthSquared( const vec3_t vec )
+{
+	return (vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2]);
+}
+#else
 void VectorAdd( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut );
 void VectorSubtract( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut );
 void VectorScale( const vec3_t vecIn, float scale, vec3_t vecOut );
@@ -252,6 +364,7 @@ void VectorClear( vec3_t vec );
 void VectorCopy( const vec3_t vecIn, vec3_t vecOut );
 float VectorLength( const vec3_t vec );
 float VectorLengthSquared( const vec3_t vec );
+#endif
 void VectorNormalizeFast( vec3_t vec );
 float VectorNormalize( vec3_t vec );
 float VectorNormalize2( const vec3_t vec, vec3_t vecOut );
@@ -260,7 +373,11 @@ void VectorInc( vec3_t vec );
 void VectorDec( vec3_t vec );
 void VectorInverse( vec3_t vec );
 void CrossProduct( const vec3_t vec1, const vec3_t vec2, vec3_t vecOut );
+#ifdef __vita__
+#define DotProduct(x, y) (x[0] * y[0] + x[1] * y[1] + x[2] * y[2])
+#else
 float DotProduct( const vec3_t vec1, const vec3_t vec2 );
+#endif
 qboolean VectorCompare( const vec3_t vec1, const vec3_t vec2 );
 qboolean VectorCompare2( const vec3_t v1, const vec3_t v2 );
 
