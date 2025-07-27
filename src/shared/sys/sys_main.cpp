@@ -32,6 +32,11 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sys_public.h"
 #include "con_local.h"
 
+#define HAVE_PROFILER
+#ifdef HAVE_PROFILER
+#include <vitagprof.h>
+#endif
+
 static char binaryPath[ MAX_OSPATH ] = { 0 };
 static char installPath[ MAX_OSPATH ] = { 0 };
 
@@ -832,6 +837,27 @@ int main ( int argc, char* argv[] )
 #else
 	while (1)
 	{
+#ifdef HAVE_PROFILER
+		SceCtrlData pad;
+		static uint32_t oldpad = 0;
+		static int is_profiling = 0;
+		static int profiling_idx = 0;
+		sceCtrlPeekBufferPositive(0, &pad, 1);
+		if (pad.buttons & SCE_CTRL_TRIANGLE && !(oldpad & SCE_CTRL_TRIANGLE)) {
+			if (is_profiling) {
+				sceClibPrintf("Stopping profiling\n");
+				char fname[256];
+				sprintf(fname, "ux0:data/prof_%d.out", profiling_idx++);
+				gprof_stop(fname, 1);
+			} else {
+				sceClibPrintf("Starting profiling\n");
+				gprof_start();
+			}
+			is_profiling = !is_profiling;
+		}
+		oldpad = pad.buttons;
+#endif
+
 		if ( com_busyWait->integer )
 		{
 			bool shouldSleep = false;
