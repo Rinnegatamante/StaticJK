@@ -34,16 +34,17 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sdl_icon.h"
 
 #ifdef VITA
-#define VERTEX_BUFFER_SIZE (1 * 1024 * 1024)
-#define TEXCOORD_BUFFER_SIZE (1 * 1024 * 1024)
 #define THREADS_POOL_SIZE (1 * 1024 * 1024)
 #define INDEX_BUFFER_NUM (4096)
 #define INDEX_BUFFER_SIZE (sizeof(uint16_t) * INDEX_BUFFER_NUM)
-uint16_t *gIndexBuffer;
+uint16_t *gStaticIndexBuffer;
 float *gVertexBuffer;
 float *gTexCoordBuffer;
-float *gVertexBufferPtr;
-float *gTexCoordBufferPtr;
+uint16_t *gIndexBuffer;
+float *gVertexBufferPtr[2];
+float *gTexCoordBufferPtr[2];
+uint16_t *gIndexBufferPtr[2];
+uint8_t buffersIdx = 0;
 #endif
 
 enum rserr_t
@@ -184,9 +185,11 @@ void WIN_Present( window_t *window )
 {
 #ifdef VITA
 	vglSwapBuffers(GL_FALSE);
-	vglIndexPointerMapped(gIndexBuffer);
-	gVertexBuffer = gVertexBufferPtr;
-	gTexCoordBuffer = gTexCoordBufferPtr;
+	buffersIdx = !buffersIdx;
+	vglIndexPointerMapped(gStaticIndexBuffer);
+	gVertexBuffer = gVertexBufferPtr[buffersIdx];
+	gTexCoordBuffer = gTexCoordBufferPtr[buffersIdx];
+	gIndexBuffer = gIndexBufferPtr[buffersIdx];
 #else
 	if ( window->api == GRAPHICS_API_OPENGL )
 	{
@@ -735,19 +738,15 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	glConfig->isFullscreen = qtrue;
 	
 	if (!inited) {
+		vglUseTripleBuffering(GL_FALSE);
 		vglInitExtended(0, glConfig->vidWidth, glConfig->vidHeight, THREADS_POOL_SIZE, SCE_GXM_MULTISAMPLE_4X);
 		
-		gIndexBuffer = (uint16_t*)malloc(INDEX_BUFFER_SIZE);
+		gStaticIndexBuffer = (uint16_t*)malloc(INDEX_BUFFER_SIZE);
 		for (uint16_t i = 0; i < INDEX_BUFFER_NUM; i++){
-			gIndexBuffer[i] = i;
+			gStaticIndexBuffer[i] = i;
 		}
-		vglIndexPointerMapped(gIndexBuffer);
+		vglIndexPointerMapped(gStaticIndexBuffer);
 		glEnableClientState(GL_VERTEX_ARRAY);
-		gVertexBufferPtr = (float *)malloc(VERTEX_BUFFER_SIZE);
-		gTexCoordBufferPtr = (float *)malloc(TEXCOORD_BUFFER_SIZE);
-		gVertexBuffer = gVertexBufferPtr;
-		gTexCoordBuffer = gTexCoordBufferPtr;
-	
 		inited = true;
 	}
 #else

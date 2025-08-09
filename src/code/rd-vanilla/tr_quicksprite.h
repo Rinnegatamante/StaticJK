@@ -36,10 +36,17 @@ private:
 			uint32_t	mGLStateBits;
 			int				mFogIndex;
 			qboolean		mUseFog;
+#ifndef __vita__
 			vec4_t			mVerts[SHADER_MAX_VERTEXES];
 			vec2_t			mTextureCoords[SHADER_MAX_VERTEXES];	// Ideally this would be static, cause it never changes
 			vec2_t			mFogTextureCoords[SHADER_MAX_VERTEXES];
 			uint32_t		mColors[SHADER_MAX_VERTEXES];
+#else
+			vec4_t *mVerts;
+			vec2_t *mTextureCoords;
+			vec2_t *mFogTextureCoords;
+			uint32_t *mColors;
+#endif
 			int				mNextVert;
 			qboolean		mTurnCullBackOn;
 

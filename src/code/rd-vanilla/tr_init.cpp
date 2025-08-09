@@ -32,6 +32,15 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "../rd-common/tr_font.h"
 #include "tr_WorldEffects.h"
 
+#ifdef __vita__
+#define VERTEX_BUFFER_SIZE (8 * 1024 * 1024)
+#define TEXCOORD_BUFFER_SIZE (8 * 1024 * 1024)
+#define INDEX_BUFFER_SIZE (8 * 1024 * 1024)
+extern float *gVertexBufferPtr[2];
+extern float *gTexCoordBufferPtr[2];
+extern uint16_t *gIndexBufferPtr[2];
+#endif
+
 glconfig_t	glConfig;
 glstate_t	glState;
 window_t	window;
@@ -1759,6 +1768,10 @@ void R_ClearStuffToStopGhoul2CrashingThings(void)
 R_Init
 ===============
 */
+#ifdef __vita__
+static uint8_t pools_inited = 0;
+#endif
+
 extern void R_InitWorldEffects();
 void R_Init( void ) {
 	int	err;
@@ -1772,6 +1785,36 @@ void R_Init( void ) {
 	memset( &tr, 0, sizeof( tr ) );
 	memset( &backEnd, 0, sizeof( backEnd ) );
 	memset( &tess, 0, sizeof( tess ) );
+
+#ifdef __vita__
+	if (!pools_inited) {
+		for (int i = 0; i < 2; i++) {
+			gVertexBufferPtr[i] = (float *)malloc(VERTEX_BUFFER_SIZE);
+			gTexCoordBufferPtr[i] = (float *)malloc(TEXCOORD_BUFFER_SIZE);
+			gIndexBufferPtr[i] = (uint16_t *)malloc(INDEX_BUFFER_SIZE);
+		}
+		gVertexBuffer = gVertexBufferPtr[0];
+		gTexCoordBuffer = gTexCoordBufferPtr[0];
+		gIndexBuffer = gIndexBufferPtr[0];
+		sceClibPrintf("Pools Addresses:\nVtx: %x\nTex: %x\nIdx: %x\n", gVertexBufferPtr, gTexCoordBufferPtr, gIndexBufferPtr);
+
+
+		tess.indexes = (glIndex_t *)gIndexBuffer;
+		gIndexBuffer += SHADER_MAX_INDEXES;
+		tess.xyz = (vec4_t *)gVertexBuffer;
+		gVertexBuffer += SHADER_MAX_VERTEXES * 4;
+		memset(tess.xyz, 0, SHADER_MAX_VERTEXES * sizeof(vec4_t));
+		memset(tess.indexes, 0, SHADER_MAX_INDEXES * sizeof(glIndex_t));
+	
+		tess.svars.colors = (color4ub_t *)gIndexBuffer;
+		gIndexBuffer += SHADER_MAX_VERTEXES * 2;
+		for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+			tess.svars.texcoords[i] = (vec2_t *)gTexCoordBuffer;
+			gTexCoordBuffer += SHADER_MAX_VERTEXES * 2;
+		}
+		pools_inited = 1;
+	}
+#endif
 
 #ifndef FINAL_BUILD
 	if ( (intptr_t)tess.xyz & 15 ) {

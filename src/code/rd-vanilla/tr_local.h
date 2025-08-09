@@ -36,9 +36,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 typedef unsigned int glIndex_t;
 #else
 #include <vitasdk.h>
+extern uint16_t *gIndexBuffer;
 extern float *gVertexBuffer;
 extern float *gTexCoordBuffer;
-extern uint16_t *indices;
 #define GL_INDEX_TYPE		GL_UNSIGNED_SHORT
 typedef uint16_t glIndex_t;
 #endif
@@ -1408,20 +1408,30 @@ typedef byte color4ub_t[4];
 
 typedef struct stageVars
 {
+#ifdef __vita__
+	color4ub_t *colors;
+	vec2_t *texcoords[NUM_TEXTURE_BUNDLES];
+#else
 	color4ub_t	colors[SHADER_MAX_VERTEXES];
 	vec2_t		texcoords[NUM_TEXTURE_BUNDLES][SHADER_MAX_VERTEXES];
+#endif
 } stageVars_t;
 
 #define	NUM_TEX_COORDS		(MAXLIGHTMAPS+1)
 
 struct shaderCommands_s
 {
+#ifdef __vita__
+	glIndex_t *indexes;
+	vec4_t		*xyz;
+#else
 	glIndex_t	indexes[SHADER_MAX_INDEXES] QALIGN(16);
 	vec4_t		xyz[SHADER_MAX_VERTEXES] QALIGN(16);
-	vec4_t		normal[SHADER_MAX_VERTEXES] QALIGN(16);
+#endif
 	vec2_t		texCoords[SHADER_MAX_VERTEXES][NUM_TEX_COORDS] QALIGN(16);
 	color4ub_t	vertexColors[SHADER_MAX_VERTEXES] QALIGN(16);
 	byte		vertexAlphas[SHADER_MAX_VERTEXES][4] QALIGN(16);
+	vec4_t		normal[SHADER_MAX_VERTEXES] QALIGN(16);
 	int			vertexDlightBits[SHADER_MAX_VERTEXES] QALIGN(16);
 
 	stageVars_t	svars QALIGN(16);

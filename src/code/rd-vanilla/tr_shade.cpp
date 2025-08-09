@@ -35,6 +35,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #ifdef VITA
 #define APIENTRY
+extern uint16_t *gIndexBuffer;
+extern float *gVertexBuffer;
+extern float *gTexCoordBuffer;
 #endif
 
 /*
@@ -678,11 +681,24 @@ static void ProjectDlightTexture2( void ) {
 	int		i, l;
 	vec3_t	origin;
 	byte	clipBits[SHADER_MAX_VERTEXES];
+#ifdef __vita__
+	vec2_t *texCoordsArray = (vec2_t *)gTexCoordBuffer;
+	gTexCoordBuffer += SHADER_MAX_VERTEXES * 2;
+	vec2_t *oldTexCoordsArray = (vec2_t *)gTexCoordBuffer;
+	gTexCoordBuffer += SHADER_MAX_VERTEXES * 2;
+	vec4_t *vertCoordsArray = (vec4_t *)gVertexBuffer;
+	gVertexBuffer += SHADER_MAX_VERTEXES * 4;
+	unsigned int *colorArray = (unsigned int *)gIndexBuffer;
+	gIndexBuffer += SHADER_MAX_VERTEXES * 2;
+	glIndex_t *hitIndexes = (glIndex_t *)gIndexBuffer;
+	gIndexBuffer += SHADER_MAX_INDEXES;
+#else
 	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
 	float	oldTexCoordsArray[SHADER_MAX_VERTEXES][2];
 	float	vertCoordsArray[SHADER_MAX_VERTEXES][4];
 	unsigned int		colorArray[SHADER_MAX_VERTEXES];
 	glIndex_t	hitIndexes[SHADER_MAX_INDEXES];
+#endif
 	int		numIndexes;
 	float	radius;
 #ifndef JK2_MODE
@@ -1016,9 +1032,18 @@ static void ProjectDlightTexture( void ) {
 	float	*texCoords;
 	byte	*colors;
 	byte	clipBits[SHADER_MAX_VERTEXES];
+#ifdef __vita__
+	vec2_t *texCoordsArray = (vec2_t *)gTexCoordBuffer;
+	gTexCoordBuffer += SHADER_MAX_VERTEXES * 2;
+	byte *colorArray = (byte *)gIndexBuffer;
+	gIndexBuffer += SHADER_MAX_VERTEXES * 2;
+	glIndex_t *hitIndexes = (glIndex_t *)gIndexBuffer;
+	gIndexBuffer += SHADER_MAX_INDEXES;
+#else
 	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
 	byte	colorArray[SHADER_MAX_VERTEXES][4];
 	glIndex_t	hitIndexes[SHADER_MAX_INDEXES];
+#endif
 	int		numIndexes;
 	float	scale;
 	float	radius;
@@ -2234,14 +2259,14 @@ void RB_EndSurface( void ) {
 	if (input->numIndexes == 0) {
 		return;
 	}
-
+#ifndef __vita__
 	if (input->indexes[SHADER_MAX_INDEXES-1] != 0) {
 		Com_Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_INDEXES hit");
 	}
 	if (input->xyz[SHADER_MAX_VERTEXES-1][0] != 0) {
 		Com_Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_VERTEXES hit");
 	}
-
+#endif
 	if ( tess.shader == tr.shadowShader ) {
 		RB_ShadowTessEnd();
 		return;
@@ -2319,6 +2344,19 @@ void RB_EndSurface( void ) {
 	tess.numIndexes = 0;
 #ifndef __vita__
 	GLimp_LogComment( "----------\n" );
+#endif
+
+#ifdef __vita__
+	tess.indexes = (glIndex_t *)gIndexBuffer;
+	gIndexBuffer += SHADER_MAX_INDEXES;
+	tess.xyz = (vec4_t *)gVertexBuffer;
+	gVertexBuffer += SHADER_MAX_VERTEXES * 4;
+	tess.svars.colors = (color4ub_t *)gIndexBuffer;
+	gIndexBuffer += SHADER_MAX_VERTEXES * 2;
+	for (int i = 0; i < NUM_TEXTURE_BUNDLES; i++) {
+		tess.svars.texcoords[i] = (vec2_t *)gTexCoordBuffer;
+		gTexCoordBuffer += SHADER_MAX_VERTEXES * 2;
+	}
 #endif
 }
 

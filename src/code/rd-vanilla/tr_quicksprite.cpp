@@ -49,6 +49,13 @@ CQuickSpriteSystem::CQuickSpriteSystem() :
 {
 	int i;
 
+#ifdef __vita__	
+	mTextureCoords = (vec2_t *)malloc(SHADER_MAX_VERTEXES * sizeof(vec2_t));
+	mVerts = (vec4_t *)malloc(SHADER_MAX_VERTEXES * sizeof(vec4_t));
+	mFogTextureCoords = (vec2_t *)malloc(SHADER_MAX_VERTEXES * sizeof(vec2_t));
+	mColors = (uint32_t *)malloc(SHADER_MAX_VERTEXES * sizeof(uint32_t));
+#endif
+	
 	memset( mVerts, 0, sizeof( mVerts ) );
 	memset( mFogTextureCoords, 0, sizeof( mFogTextureCoords ) );
 	memset( mColors, 0, sizeof( mColors ) );
