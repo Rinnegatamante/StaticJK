@@ -259,7 +259,15 @@ void R_Splash()
 		const float x2 = 320 + width / 2;
 		const float y1 = 240 - height / 2;
 		const float y2 = 240 + height / 2;
-
+#ifdef __vita__
+		float vertices[] = { x1, y1, x2, y1, x1, y2, x2, y2 };
+		float texcoords[] = { 0, 0, 1, 0, 0, 1, 1, 1};
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		vglVertexPointer( 2, GL_FLOAT, 0, 4, vertices );
+		vglTexCoordPointer(2, GL_FLOAT, 0, 4, texcoords);
+		vglDrawObjects(GL_TRIANGLE_STRIP, 4, GL_TRUE);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
 		qglBegin (GL_TRIANGLE_STRIP);
 			qglTexCoord2f( 0,  0 );
 			qglVertex2f(x1, y1);
@@ -270,6 +278,7 @@ void R_Splash()
 			qglTexCoord2f( 1, 1 );
 			qglVertex2f(x2, y2);
 		qglEnd();
+#endif
 	}
 
 	ri.WIN_Present( &window );

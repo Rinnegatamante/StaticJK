@@ -126,6 +126,20 @@ void RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *
 	}
 	qglColor3f( tr.identityLight, tr.identityLight, tr.identityLight );
 
+#ifdef __vita__
+	float vertices[] = { x, y, x+w, y, x+w, y+h, x, y+h };
+	float texcoords[] = {
+		0.5f / cols,  0.5f / rows,
+		( cols - 0.5f ) / cols ,  0.5f / rows,
+		( cols - 0.5f ) / cols, ( rows - 0.5f ) / rows,
+		0.5f / cols, ( rows - 0.5f ) / rows
+	};
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	vglVertexPointer( 2, GL_FLOAT, 0, 4, vertices );
+	vglTexCoordPointer(2, GL_FLOAT, 0, 4, texcoords);
+	vglDrawObjects(GL_TRIANGLE_FAN, 4, GL_TRUE);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
 	qglBegin (GL_QUADS);
 	qglTexCoord2f ( 0.5f / cols,  0.5f / rows );
 	qglVertex2f (x, y);
@@ -136,6 +150,7 @@ void RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *
 	qglTexCoord2f ( 0.5f / cols, ( rows - 0.5f ) / rows );
 	qglVertex2f (x, y+h);
 	qglEnd ();
+#endif
 }
 
 
@@ -427,6 +442,15 @@ static void RE_Blit(float fX0, float fY0, float fX1, float fY1, float fX2, float
 	qglColor3f( 1.0f, 1.0f, 1.0f );
 
 
+#ifdef __vita__
+	float vertices[] = { fX0, fY0, fX1, fY1, fX2, fY2, fX3, fY3 };
+	float texcoords[] = { 0, 0, 1, 0, 1, 1, 0, 1 };
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	vglVertexPointer( 2, GL_FLOAT, 0, 4, vertices );
+	vglTexCoordPointer(2, GL_FLOAT, 0, 4, texcoords);
+	vglDrawObjects(GL_TRIANGLE_FAN, 4, GL_TRUE);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#else
 	qglBegin (GL_QUADS);
 	{
 		// TL...
@@ -454,6 +478,7 @@ static void RE_Blit(float fX0, float fY0, float fX1, float fY1, float fX2, float
 		qglVertex2f( fX3, fY3);
 	}
 	qglEnd ();
+#endif
 }
 
 static void RE_KillDissolve(void)

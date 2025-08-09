@@ -181,8 +181,10 @@ instead of using the single glDrawElements call that may be inefficient
 without compiled vertex arrays.
 ==================
 */
+#ifdef VITA
+#define R_DrawElements(num, indexes) glDrawElements(GL_TRIANGLES, num, GL_INDEX_TYPE, indexes)
+#else
 static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
-#ifndef VITA
 	int		primitives;
 
 	primitives = r_primitives->integer;
@@ -198,13 +200,11 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 
 
 	if ( primitives == 2 ) {
-#endif
 		qglDrawElements( GL_TRIANGLES,
 						numIndexes,
 						GL_INDEX_TYPE,
 						indexes );
 		return;
-#ifndef VITA
 	}
 
 #ifndef __EMSCRIPTEN__
@@ -220,10 +220,9 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 #else
     R_DrawStripElements( numIndexes,  indexes, R_ArrayElementDiscrete );
 #endif
-#endif
 	// anything else will cause no drawing
 }
-
+#endif
 
 
 

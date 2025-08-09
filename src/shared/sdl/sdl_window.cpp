@@ -34,7 +34,12 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "sdl_icon.h"
 
 #ifdef VITA
-uint16_t *indices;
+#define VERTEX_BUFFER_SIZE (1 * 1024 * 1024)
+#define TEXCOORD_BUFFER_SIZE (1 * 1024 * 1024)
+#define THREADS_POOL_SIZE (1 * 1024 * 1024)
+#define INDEX_BUFFER_NUM (4096)
+#define INDEX_BUFFER_SIZE (sizeof(uint16_t) * INDEX_BUFFER_NUM)
+uint16_t *gIndexBuffer;
 float *gVertexBuffer;
 float *gTexCoordBuffer;
 float *gVertexBufferPtr;
@@ -179,7 +184,7 @@ void WIN_Present( window_t *window )
 {
 #ifdef VITA
 	vglSwapBuffers(GL_FALSE);
-	vglIndexPointerMapped(indices);
+	vglIndexPointerMapped(gIndexBuffer);
 	gVertexBuffer = gVertexBufferPtr;
 	gTexCoordBuffer = gTexCoordBufferPtr;
 #else
@@ -730,16 +735,16 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	glConfig->isFullscreen = qtrue;
 	
 	if (!inited) {
-		vglInitExtended(0x100000, glConfig->vidWidth, glConfig->vidHeight, 0x100000, SCE_GXM_MULTISAMPLE_4X);
+		vglInitExtended(0, glConfig->vidWidth, glConfig->vidHeight, THREADS_POOL_SIZE, SCE_GXM_MULTISAMPLE_4X);
 		
-		indices = (uint16_t*)malloc(sizeof(uint16_t) * 4096);
-		for (uint16_t i = 0; i < 4096; i++){
-			indices[i] = i;
+		gIndexBuffer = (uint16_t*)malloc(INDEX_BUFFER_SIZE);
+		for (uint16_t i = 0; i < INDEX_BUFFER_NUM; i++){
+			gIndexBuffer[i] = i;
 		}
-		vglIndexPointerMapped(indices);
+		vglIndexPointerMapped(gIndexBuffer);
 		glEnableClientState(GL_VERTEX_ARRAY);
-		gVertexBufferPtr = (float *)malloc(0x100000);
-		gTexCoordBufferPtr = (float *)malloc(0x100000);
+		gVertexBufferPtr = (float *)malloc(VERTEX_BUFFER_SIZE);
+		gTexCoordBufferPtr = (float *)malloc(TEXCOORD_BUFFER_SIZE);
 		gVertexBuffer = gVertexBufferPtr;
 		gTexCoordBuffer = gTexCoordBufferPtr;
 	
