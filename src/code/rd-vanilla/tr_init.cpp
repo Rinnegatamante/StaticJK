@@ -237,6 +237,11 @@ void RE_SetLightStyle(int style, int color);
 
 void R_Splash()
 {
+#ifdef __vita__
+	// Nukeing this allows for the vitaGL splashscreen to cover up loading times
+	return;
+#endif
+
 	image_t *pImage = R_FindImageFile( "menu/splash", qfalse, qfalse, qfalse, GL_CLAMP);
 
 	if ( !pImage )
