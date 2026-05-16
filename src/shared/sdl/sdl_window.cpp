@@ -37,9 +37,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #define VERTEX_BUFFER_SIZE (1 * 1024 * 1024)
 #define TEXCOORD_BUFFER_SIZE (1 * 1024 * 1024)
 #define THREADS_POOL_SIZE (1 * 1024 * 1024)
-#define INDEX_BUFFER_NUM (4096)
-#define INDEX_BUFFER_SIZE (sizeof(uint16_t) * INDEX_BUFFER_NUM)
-uint16_t *gIndexBuffer;
 float *gVertexBuffer;
 float *gTexCoordBuffer;
 float *gVertexBufferPtr;
@@ -184,7 +181,7 @@ void WIN_Present( window_t *window )
 {
 #ifdef VITA
 	vglSwapBuffers(GL_FALSE);
-	vglIndexPointerMapped(gIndexBuffer);
+	vglIndexPointerDefault();
 	gVertexBuffer = gVertexBufferPtr;
 	gTexCoordBuffer = gTexCoordBufferPtr;
 #else
@@ -736,12 +733,7 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	
 	if (!inited) {
 		vglInitExtended(0, glConfig->vidWidth, glConfig->vidHeight, THREADS_POOL_SIZE, SCE_GXM_MULTISAMPLE_4X);
-		
-		gIndexBuffer = (uint16_t*)malloc(INDEX_BUFFER_SIZE);
-		for (uint16_t i = 0; i < INDEX_BUFFER_NUM; i++){
-			gIndexBuffer[i] = i;
-		}
-		vglIndexPointerMapped(gIndexBuffer);
+		vglIndexPointerDefault();
 		glEnableClientState(GL_VERTEX_ARRAY);
 		gVertexBufferPtr = (float *)malloc(VERTEX_BUFFER_SIZE);
 		gTexCoordBufferPtr = (float *)malloc(TEXCOORD_BUFFER_SIZE);
