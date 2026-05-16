@@ -26,6 +26,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #include "tr_local.h"
 
+#ifdef __vita__
+#include <vitasdk.h>
+#endif
 
 /*
 =====================
@@ -84,6 +87,38 @@ void R_PerformanceCounters( void ) {
 	memset( &backEnd.pc, 0, sizeof( backEnd.pc ) );
 }
 
+#ifdef __vita__
+__thread shaderCommands_t *tessPtr;
+#define VERTEX_BUFFER_SIZE (1 * 1024 * 1024)
+#define TEXCOORD_BUFFER_SIZE (1 * 1024 * 1024)
+float *gVertexBuffer;
+float *gTexCoordBuffer;
+int rendBackEnd = 0;
+int rendWidth, rendHeight, rendThreadId;
+void *renderThread(void *argv) {
+	rendThreadId = sceKernelGetThreadId();
+	vglInitExtended(0, rendWidth, rendHeight, 1 * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
+	vglIndexPointerDefault();
+	glEnableClientState(GL_VERTEX_ARRAY);
+	gVertexBuffer = vglAllocFromScratch(VERTEX_BUFFER_SIZE);
+	gTexCoordBuffer = vglAllocFromScratch(TEXCOORD_BUFFER_SIZE);
+	sceKernelSignalSema(rend_mutex_out, 1);
+
+	for (;;) {
+		sceKernelWaitSema(rend_mutex_in, 1, NULL);
+		renderCommandList_t	*cmdList = &backEndDataPtr[rendBackEnd]->commands;
+		tessPtr = &tessArray[rendBackEnd];
+		RB_ExecuteRenderCommands( cmdList->cmds );
+		sceKernelSignalSema(rend_mutex_out, 1);
+		rendBackEnd = !rendBackEnd;
+	}
+	sceKernelExitDeleteThread(0);
+	return NULL;
+}
+
+
+#endif
+
 /*
 ====================
 R_IssueRenderCommands
@@ -103,6 +138,10 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 
 	// clear it out, in case this is a sync and not a buffer flip
 	cmdList->used = 0;
+	
+#ifdef __vita__
+	sceKernelWaitSema(rend_mutex_out, 1, NULL);
+#endif
 
 	// at this point, the back end thread is idle, so it is ok
 	// to look at it's performance counters
@@ -110,11 +149,18 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 		R_PerformanceCounters();
 	}
 
+#ifdef __vita__
+	sceKernelSignalSema(rend_mutex_in, 1);
+	activeBackEnd = !activeBackEnd;
+	backEndData = backEndDataPtr[activeBackEnd];
+	tessPtr = &tessArray[activeBackEnd];
+#else
 	// actually start the commands going
 	if ( !r_skipBackEnd->integer ) {
 		// let it start on the new batch
 		RB_ExecuteRenderCommands( cmdList->cmds );
 	}
+#endif
 }
 
 
@@ -359,7 +405,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 	tr.frameCount++;
 	tr.frameSceneNum = 0;
-
+#ifndef __vita__
 	//
 	// do overdraw measurement
 	//
@@ -427,6 +473,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
             Com_Error( ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!\n", err );
         }
     }
+#endif
 
 	//
 	// draw buffer stuff
@@ -436,7 +483,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		return;
 	}
 	cmd->commandId = RC_DRAW_BUFFER;
-#ifndef VITA
+#ifndef __vita__
 	if ( glConfig.stereoEnabled ) {
 		if ( stereoFrame == STEREO_LEFT ) {
 			cmd->buffer = (int)GL_BACK_LEFT;
@@ -456,7 +503,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		{
 			cmd->buffer = (int)GL_BACK;
 		}
-#ifndef VITA
+#ifndef __vita__
 	}
 #endif
 }

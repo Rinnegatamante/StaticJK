@@ -541,6 +541,7 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
 		SceShaccCg_stub
 		SceHid_stub
 		SceMotion_stub
+		pthread
 		c
 		stdc++
 		m

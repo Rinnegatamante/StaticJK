@@ -26,8 +26,11 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "tr_local.h"
 #include "tr_common.h"
 
-backEndData_t	*backEndData;
+
+backEndData_t *backEndDataPtr[BACKEND_DATA_NUM];
+backEndData_t *backEndData;
 backEndState_t	backEnd;
+int activeBackEnd = 0;
 
 bool tr_stencilled = false;
 extern qboolean tr_distortionPrePost; //tr_shadows.cpp
@@ -1543,7 +1546,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 	}
 
 	cmd = (const swapBuffersCommand_t *)data;
-#ifndef VITA
+#ifndef __vita__
 	// we measure overdraw by reading back the stencil buffer and
 	// counting up the number of increments that have happened
 	if ( r_measureOverdraw->integer ) {
@@ -1654,7 +1657,7 @@ GLuint g_uiCurrentPixelShaderType = 0x0;
 // Begin using a Pixel Shader.
 void BeginPixelShader( GLuint uiType, GLuint uiID )
 {
-#ifndef VITA
+#ifndef __vita__
 	switch ( uiType )
 	{
 		// Using Register Combiners, so call the Display List that stores it.
@@ -1704,7 +1707,7 @@ extern bool g_bTextureRectangleHack;
 
 static inline void RB_BlurGlowTexture()
 {
-#ifndef VITA
+#ifndef __vita__
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );
 
@@ -1878,7 +1881,7 @@ static inline void RB_BlurGlowTexture()
 // Draw the glow blur over the screen additively.
 static inline void RB_DrawGlowOverlay()
 {
-#ifndef VITA
+#ifndef __vita__
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );
 

@@ -301,7 +301,7 @@ static void GLW_InitTextureCompression( void )
 	// Check for available tc methods.
 	newer_tc = ri.GL_ExtensionSupported("GL_ARB_texture_compression") && ri.GL_ExtensionSupported("GL_EXT_texture_compression_s3tc");
 	old_tc = ri.GL_ExtensionSupported("GL_S3_s3tc");
-#ifdef VITA
+#ifdef __vita__
 	newer_tc = true;
 #endif
 	if ( old_tc )
@@ -476,7 +476,7 @@ static void GLimp_InitExtensions( void )
 	Com_Printf ("...using GL_EXT_texture_edge_clamp\n" );
 
 	// GL_ARB_multitexture
-#ifndef VITA
+#ifndef __vita__
 	qglMultiTexCoord2fARB = NULL;
 	qglActiveTextureARB = NULL;
 	qglClientActiveTextureARB = NULL;
@@ -485,7 +485,7 @@ static void GLimp_InitExtensions( void )
 	{
 		if ( r_ext_multitexture->integer )
 		{
-#ifndef VITA
+#ifndef __vita__
 			qglMultiTexCoord2fARB = ( PFNGLMULTITEXCOORD2FARBPROC ) ri.GL_GetProcAddress( "glMultiTexCoord2fARB" );
 			qglActiveTextureARB = ( PFNGLACTIVETEXTUREARBPROC ) ri.GL_GetProcAddress( "glActiveTextureARB" );
 			qglClientActiveTextureARB = ( PFNGLCLIENTACTIVETEXTUREARBPROC ) ri.GL_GetProcAddress( "glClientActiveTextureARB" );
@@ -501,7 +501,7 @@ static void GLimp_InitExtensions( void )
 				}
 				else
 				{
-#ifndef VITA
+#ifndef __vita__
 					qglMultiTexCoord2fARB = NULL;
 					qglActiveTextureARB = NULL;
 					qglClientActiveTextureARB = NULL;
@@ -521,7 +521,7 @@ static void GLimp_InitExtensions( void )
 	}
 
 	// GL_EXT_compiled_vertex_array
-#ifndef VITA
+#ifndef __vita__
 	qglLockArraysEXT = NULL;
 	qglUnlockArraysEXT = NULL;
 #endif
@@ -530,7 +530,7 @@ static void GLimp_InitExtensions( void )
 		if ( r_ext_compiled_vertex_array->integer )
 		{
 			Com_Printf ("...using GL_EXT_compiled_vertex_array\n" );
-#ifndef VITA
+#ifndef __vita__
 			qglLockArraysEXT = ( PFNGLLOCKARRAYSEXTPROC ) ri.GL_GetProcAddress( "glLockArraysEXT" );
 			qglUnlockArraysEXT = ( PFNGLUNLOCKARRAYSEXTPROC ) ri.GL_GetProcAddress( "glUnlockArraysEXT" );
 			if (!qglLockArraysEXT || !qglUnlockArraysEXT) {
@@ -555,7 +555,7 @@ static void GLimp_InitExtensions( void )
 		// NOTE: This extension requires multitexture support (over 2 units).
 		if ( glConfig.maxActiveTextures >= 2 )
 		{
-#ifndef VITA
+#ifndef __vita__
 			bNVRegisterCombiners = true;
 			// Register Combiners function pointer address load.	- AReis
 			// NOTE: VV guys will _definetly_ not be able to use regcoms. Pixel Shaders are just as good though :-)
@@ -582,7 +582,7 @@ static void GLimp_InitExtensions( void )
 #endif
 			{
 				bNVRegisterCombiners = false;
-#ifndef VITA
+#ifndef __vita__
 				qglCombinerParameterfvNV = NULL;
 				qglCombinerParameteriNV = NULL;
 #endif
@@ -630,7 +630,7 @@ static void GLimp_InitExtensions( void )
 	}
 
 	// If we support one or the other, load the shared function pointers.
-#ifndef VITA
+#ifndef __vita__
 	if ( bARBVertexProgram || bARBFragmentProgram )
 	{
 		qglProgramStringARB					= (PFNGLPROGRAMSTRINGARBPROC)  ri.GL_GetProcAddress("glProgramStringARB");
@@ -664,14 +664,14 @@ static void GLimp_InitExtensions( void )
 		{
 			bARBVertexProgram = false;
 			bARBFragmentProgram = false;
-#ifndef VITA
+#ifndef __vita__
 			qglGenProgramsARB = NULL;	//clear ptrs that get checked
 			qglProgramEnvParameter4fARB = NULL;
 #endif
 			Com_Printf ("...ignoring GL_ARB_vertex_program\n" );
 			Com_Printf ("...ignoring GL_ARB_fragment_program\n" );
 		}
-#ifndef VITA
+#ifndef __vita__
 	}
 #endif
 	// Figure out which texture rectangle extension to use.
@@ -688,7 +688,7 @@ static void GLimp_InitExtensions( void )
 	{
 		bTexRectSupported = true;
 	}
-#ifndef VITA
+#ifndef __vita__
 	// Find out how many general combiners they have.
 	#define GL_MAX_GENERAL_COMBINERS_NV       0x854D
 	GLint iNumGeneralCombiners = 0;
@@ -710,7 +710,7 @@ static void GLimp_InitExtensions( void )
 		ri.Cvar_Set( "r_DynamicGlow","0" );
 	}
 
-#if !defined(__APPLE__) && !defined(VITA)
+#if !defined(__APPLE__) && !defined(__vita__)
 	qglStencilOpSeparate = (PFNGLSTENCILOPSEPARATEPROC)ri.GL_GetProcAddress("glStencilOpSeparate");
 	if (qglStencilOpSeparate)
 	{
@@ -970,7 +970,7 @@ R_ScreenshotFilename
 void R_ScreenshotFilename( char *buf, int bufSize, const char *ext ) {
 	time_t rawtime;
 	char timeStr[32] = {0}; // should really only reach ~19 chars
-#ifndef VITA
+#ifndef __vita__
 	time( &rawtime );
 	strftime( timeStr, sizeof( timeStr ), "%Y-%m-%d_%H-%M-%S", localtime( &rawtime ) ); // or gmtime
 #else
@@ -1183,7 +1183,7 @@ void GL_SetDefaultState( void )
 
 	// initialize downstream texture unit if we're running
 	// in a multitexture environment
-#ifndef VITA
+#ifndef __vita__
 	if ( qglActiveTextureARB )
 #endif
 	{
@@ -1332,11 +1332,11 @@ void GfxInfo_f( void )
 		ri.Printf( PRINT_ALL, "rendering primitives: " );
 		primitives = r_primitives->integer;
 		if ( primitives == 0 ) {
-#ifndef VITA
+#ifndef __vita__
 			if ( qglLockArraysEXT )
 #endif
 				primitives = 2;
-#ifndef VITA
+#ifndef __vita__
 			else
 				primitives = 1;
 #endif
@@ -1357,7 +1357,7 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "texture bits: %d\n", r_texturebits->integer );
 	if ( r_texturebitslm->integer > 0 )
 		ri.Printf( PRINT_ALL, "lightmap texture bits: %d\n", r_texturebitslm->integer );
-#ifdef VITA
+#ifdef __vita__
 	ri.Printf( PRINT_ALL, "multitexture: %s\n", enablestrings[1] );
 	ri.Printf( PRINT_ALL, "compiled vertex arrays: %s\n", enablestrings[1] );
 #else
@@ -1579,7 +1579,7 @@ void R_Register( void )
 	r_DynamicGlowSoft = ri.Cvar_Get( "r_DynamicGlowSoft", "1", CVAR_ARCHIVE_ND );
 	r_DynamicGlowWidth = ri.Cvar_Get( "r_DynamicGlowWidth", "320", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	r_DynamicGlowHeight = ri.Cvar_Get( "r_DynamicGlowHeight", "240", CVAR_ARCHIVE_ND | CVAR_LATCH );
-#ifdef VITA
+#ifdef __vita__
 	r_picmip = ri.Cvar_Get ("r_picmip", "3", CVAR_ARCHIVE | CVAR_LATCH );
 #else
 	r_picmip = ri.Cvar_Get ("r_picmip", "0", CVAR_ARCHIVE | CVAR_LATCH );
@@ -1587,7 +1587,7 @@ void R_Register( void )
 	ri.Cvar_CheckRange( r_picmip, 0, 16, qtrue );
 	r_colorMipLevels = ri.Cvar_Get ("r_colorMipLevels", "0", CVAR_LATCH );
 	r_detailTextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE_ND | CVAR_LATCH );
-#ifdef VITA
+#ifdef __vita__
 	r_texturebits = ri.Cvar_Get( "r_texturebits", "16", CVAR_ARCHIVE_ND | CVAR_LATCH );
 #else
 	r_texturebits = ri.Cvar_Get( "r_texturebits", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
@@ -1612,7 +1612,7 @@ void R_Register( void )
 	//
 	r_lodCurveError = ri.Cvar_Get( "r_lodCurveError", "250", CVAR_ARCHIVE_ND );
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE_ND );
-#ifdef VITA
+#ifdef __vita__
 	r_flares = ri.Cvar_Get ("r_flares", "0", CVAR_ARCHIVE_ND );
 #else
 	r_flares = ri.Cvar_Get ("r_flares", "1", CVAR_ARCHIVE_ND );
@@ -1768,7 +1768,7 @@ extern void R_InitWorldEffects();
 void R_Init( void ) {
 	int	err;
 	int i;
-
+	
 	//ri.Printf( PRINT_ALL, "----- R_Init -----\n" );
 
 	ShaderEntryPtrs_Clear();
@@ -1776,7 +1776,9 @@ void R_Init( void ) {
 	// clear all our internal state
 	memset( &tr, 0, sizeof( tr ) );
 	memset( &backEnd, 0, sizeof( backEnd ) );
-	memset( &tess, 0, sizeof( tess ) );
+	memset( &tessArray[0], 0, sizeof( tessArray[0] ) );
+	memset( &tessArray[1], 0, sizeof( tessArray[1] ) );
+	tessPtr = &tessArray[0];
 
 #ifndef FINAL_BUILD
 	if ( (intptr_t)tess.xyz & 15 ) {
@@ -1816,7 +1818,10 @@ void R_Init( void ) {
 	R_NoiseInit();
 	R_Register();
 
-	backEndData = (backEndData_t *) R_Hunk_Alloc( sizeof( backEndData_t ), qtrue );
+	for (int i = 0; i < BACKEND_DATA_NUM; i++) {
+		backEndDataPtr[i] = (backEndData_t *) R_Hunk_Alloc( sizeof( backEndData_t ), qtrue );
+	}
+	backEndData = backEndDataPtr[0];
 	R_InitNextFrame();
 
 	const color4ub_t color = {0xff, 0xff, 0xff, 0xff};
@@ -1853,7 +1858,7 @@ extern void R_ShutdownWorldEffects(void);
 void RE_Shutdown( qboolean destroyWindow, qboolean restarting ) {
 	for ( size_t i = 0; i < numCommands; i++ )
 		ri.Cmd_RemoveCommand( commands[i].cmd );
-#ifndef VITA
+#ifndef __vita__
 	if ( r_DynamicGlow && r_DynamicGlow->integer )
 	{
 		// Release the Glow Vertex Shader.

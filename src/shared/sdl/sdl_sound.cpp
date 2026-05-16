@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "client/client.h"
 #include "client/snd_local.h"
 
-#ifdef VITA
+#ifdef __vita__
 #include <vitasdk.h>
 #define SAMPLE_RATE   44100
 #define AUDIOSIZE 16384
@@ -183,7 +183,7 @@ SNDDMA_Init
 */
 qboolean SNDDMA_Init(int sampleFrequencyInKHz)
 {
-#ifdef VITA
+#ifdef __vita__
 	if (psp2_inited) return qtrue;
 	psp2_inited = 1;
 	
@@ -322,7 +322,7 @@ SNDDMA_GetDMAPos
 */
 int SNDDMA_GetDMAPos(void)
 {
-#ifdef VITA
+#ifdef __vita__
 	if (!snd_inited) return 0;
 	
 	SceRtcTick tick;
@@ -343,7 +343,7 @@ SNDDMA_Shutdown
 */
 void SNDDMA_Shutdown(void)
 {
-#ifndef VITA
+#ifndef __vita__
 	Com_Printf("Closing SDL audio device...\n");
 	SDL_PauseAudioDevice(dev, 1);
 	SDL_CloseAudioDevice(dev);
@@ -365,7 +365,7 @@ Send sound to device if buffer isn't really the dma buffer
 */
 void SNDDMA_Submit(void)
 {
-#ifndef VITA
+#ifndef __vita__
 	SDL_UnlockAudioDevice(dev);
 #endif
 }
@@ -377,7 +377,7 @@ SNDDMA_BeginPainting
 */
 void SNDDMA_BeginPainting (void)
 {
-#ifndef VITA
+#ifndef __vita__
 	SDL_LockAudioDevice(dev);
 #endif
 }
@@ -389,19 +389,17 @@ extern int s_UseOpenAL;
 // (De)activates sound playback
 void SNDDMA_Activate( qboolean activate )
 {
-#ifndef VITA
 #ifdef USE_OPENAL
 	if ( s_UseOpenAL )
 	{
 		S_AL_MuteAllSounds( (qboolean)!activate );
 	}
 #endif
-#endif
 	if ( activate )
 	{
 		S_ClearSoundBuffer();
 	}
-#ifndef VITA
+#ifndef __vita__
 	SDL_PauseAudioDevice( dev, !activate );
 #endif
 }

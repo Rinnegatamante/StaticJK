@@ -20,6 +20,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <SDL.h>
+#include <pthread.h>
 
 #ifdef __EMSCRIPTEN__
 #include "../../lib/SDL2/include/SDL_video.h"
@@ -32,16 +33,6 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "rd-common/tr_types.h"
 #include "sys/sys_local.h"
 #include "sdl_icon.h"
-
-#ifdef VITA
-#define VERTEX_BUFFER_SIZE (1 * 1024 * 1024)
-#define TEXCOORD_BUFFER_SIZE (1 * 1024 * 1024)
-#define THREADS_POOL_SIZE (1 * 1024 * 1024)
-float *gVertexBuffer;
-float *gTexCoordBuffer;
-float *gVertexBufferPtr;
-float *gTexCoordBufferPtr;
-#endif
 
 enum rserr_t
 {
@@ -172,18 +163,25 @@ Minimize the game so that user is back at the desktop
 */
 void GLimp_Minimize(void)
 {
-#ifndef VITA
+#ifndef __vita__
 	SDL_MinimizeWindow( screen );
 #endif
 }
 
+#ifdef __vita__
+#define VERTEX_BUFFER_SIZE (1 * 1024 * 1024) // Sync these in tr_cmds.cpp
+#define TEXCOORD_BUFFER_SIZE (1 * 1024 * 1024)
+extern float *gVertexBuffer;
+extern float *gTexCoordBuffer;
+#endif
+
 void WIN_Present( window_t *window )
 {
-#ifdef VITA
+#ifdef __vita__
 	vglSwapBuffers(GL_FALSE);
 	vglIndexPointerDefault();
-	gVertexBuffer = gVertexBufferPtr;
-	gTexCoordBuffer = gTexCoordBufferPtr;
+	gVertexBuffer = (float *)vglAllocFromScratch(VERTEX_BUFFER_SIZE);
+	gTexCoordBuffer = (float *)vglAllocFromScratch(TEXCOORD_BUFFER_SIZE);
 #else
 	if ( window->api == GRAPHICS_API_OPENGL )
 	{
@@ -707,6 +705,14 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	return RSERR_OK;
 }
 
+#ifdef __vita__
+#include <vitasdk.h>
+extern int rendWidth;
+extern int rendHeight;
+extern void *renderThread(void *argv);
+SceUID rend_mutex_in, rend_mutex_out;
+#endif
+
 /*
 ===============
 GLimp_StartDriverAndSetMode
@@ -714,7 +720,7 @@ GLimp_StartDriverAndSetMode
 */
 static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDesc_t *windowDesc, int mode, qboolean fullscreen, qboolean noborder)
 {
-#ifdef VITA
+#ifdef __vita__
 	static bool inited = false;
 	if (mode < 0) mode = 3;
 	
@@ -732,14 +738,17 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	glConfig->isFullscreen = qtrue;
 	
 	if (!inited) {
-		vglInitExtended(0, glConfig->vidWidth, glConfig->vidHeight, THREADS_POOL_SIZE, SCE_GXM_MULTISAMPLE_4X);
-		vglIndexPointerDefault();
-		glEnableClientState(GL_VERTEX_ARRAY);
-		gVertexBufferPtr = (float *)malloc(VERTEX_BUFFER_SIZE);
-		gTexCoordBufferPtr = (float *)malloc(TEXCOORD_BUFFER_SIZE);
-		gVertexBuffer = gVertexBufferPtr;
-		gTexCoordBuffer = gTexCoordBufferPtr;
-	
+		rendWidth = glConfig->vidWidth;
+		rendHeight = glConfig->vidHeight;
+		rend_mutex_in = sceKernelCreateSema("rend_mutex_in", 0, 0, 1, NULL);
+		rend_mutex_out = sceKernelCreateSema("rend_mutex_out", 0, 0, 1, NULL);
+		pthread_t t;
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_attr_setstacksize(&attr, 0x40000);
+		pthread_create(&t, &attr, renderThread, NULL);
+		sceKernelWaitSema(rend_mutex_out, 1, NULL);
+		sceKernelSignalSema(rend_mutex_out, 1);
 		inited = true;
 	}
 #else

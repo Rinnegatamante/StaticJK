@@ -33,7 +33,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include <GL/Regal.h>
 #endif
 
-#ifdef VITA
+#ifdef __vita__
 #define APIENTRY
 #endif
 
@@ -44,7 +44,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
   This file deals with applying shaders to surface data in the tess struct.
 */
 
-shaderCommands_t	tess;
+shaderCommands_t tessArray[BACKEND_DATA_NUM];
 static qboolean	setArraysOnce;
 
 color4ub_t	styleColors[MAX_LIGHT_STYLES];
@@ -52,7 +52,7 @@ bool		styleUpdated[MAX_LIGHT_STYLES];
 
 extern bool g_bRenderGlowingObjects;
 
-#ifndef VITA
+#ifndef __vita__
 /*
 ================
 R_ArrayElementDiscrete
@@ -181,7 +181,7 @@ instead of using the single glDrawElements call that may be inefficient
 without compiled vertex arrays.
 ==================
 */
-#ifdef VITA
+#ifdef __vita__
 #define R_DrawElements(num, indexes) glDrawElements(GL_TRIANGLES, num, GL_INDEX_TYPE, indexes)
 #else
 static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {

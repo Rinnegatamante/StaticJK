@@ -23,6 +23,7 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <cstdarg>
 #include <cstdio>
+#include <pthread.h>
 #include <sys/stat.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -768,8 +769,8 @@ void main_loop() {
 }
 #endif
 
-#ifdef VITA
-int ja_main ( unsigned int argc, char** argv )
+#ifdef __vita__
+void *ja_main ( void *argv )
 #else
 int main ( int argc, char* argv[] )
 #endif
@@ -788,13 +789,13 @@ int main ( int argc, char* argv[] )
 	if ( argc >= 2 && Q_strncmp ( argv[1], "-psn", 4 ) == 0 )
 		argc = 1;
 #endif
-#ifdef VITA
+#ifdef __vita__
 	Sys_SetBinaryPath( DEFAULT_BASEDIR );
 #else
 	Sys_SetBinaryPath( Sys_Dirname( argv[ 0 ] ) );
 #endif
 	Sys_SetDefaultInstallPath( DEFAULT_BASEDIR );
-
+#ifndef __vita__
 	// Concatenate the command line for passing to Com_Init
 	for( i = 1; i < argc; i++ )
 	{
@@ -809,7 +810,7 @@ int main ( int argc, char* argv[] )
 
 		Q_strcat( commandLine, sizeof( commandLine ), " " );
 	}
-
+#endif
 	Com_Init (commandLine);
 
 #ifndef DEDICATED
@@ -909,13 +910,11 @@ int main(int argc, char **argv) {
 		sceKernelExitProcess(0);
 	}
 	
-	// We need a bigger stack to run Quake 3, so we create a new thread with a proper stack size
-	SceUID main_thread = sceKernelCreateThread("Jedi Academy", ja_main, 0x40, 0x200000, 0, 0, NULL);
-	if (main_thread >= 0){
-		sceKernelStartThread(main_thread, 0, NULL);
-		sceKernelWaitThreadEnd(main_thread, NULL, NULL);
-	}
-	return 0;
-	
+	pthread_t t;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr, 0x200000);
+	pthread_create(&t, &attr, ja_main, NULL);
+	return sceKernelExitDeleteThread(0);	
 }
 #endif

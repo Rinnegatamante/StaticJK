@@ -31,7 +31,9 @@ along with this program; if not, see <http://www.gnu.org/licenses/>.
 #include "mdx_format.h"
 #include "qgl.h"
 
-#ifndef VITA
+#define BACKEND_DATA_NUM (2)
+
+#ifndef __vita__
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
 typedef unsigned int glIndex_t;
 #else
@@ -45,6 +47,8 @@ typedef uint16_t glIndex_t;
 
 extern refimport_t ri;
 
+extern int activeBackEnd;
+extern int rendBackEnd;
 
 // 13 bits
 // can't be increased without changing bit packing for drawsurfs
@@ -1453,7 +1457,10 @@ typedef __declspec(align(16)) shaderCommands_s	shaderCommands_t;
 typedef shaderCommands_s	shaderCommands_t;
 #endif
 
-extern	shaderCommands_t	tess;
+extern __thread shaderCommands_t *tessPtr;
+extern shaderCommands_t tessArray[BACKEND_DATA_NUM];
+extern int rendThreadId;
+#define tess (*tessPtr)
 
 extern	color4ub_t	styleColors[MAX_LIGHT_STYLES];
 extern	bool		styleUpdated[MAX_LIGHT_STYLES];
@@ -1807,7 +1814,13 @@ typedef struct {
 	renderCommandList_t	commands;
 } backEndData_t;
 
-extern	backEndData_t	*backEndData;
+extern	backEndData_t *backEndData;
+extern	backEndData_t *backEndDataPtr[BACKEND_DATA_NUM];
+#ifdef __vita__
+#include <vitasdk.h>
+extern SceUID rend_mutex_in;
+extern SceUID rend_mutex_out;
+#endif
 
 void *R_GetCommandBuffer( int bytes );
 void RB_ExecuteRenderCommands( const void *data );
