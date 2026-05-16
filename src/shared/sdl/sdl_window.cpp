@@ -186,7 +186,7 @@ void WIN_Present( window_t *window )
 #ifdef VITA
 	vglSwapBuffers(GL_FALSE);
 	buffersIdx = !buffersIdx;
-	vglIndexPointerDefault();
+	vglIndexPointerMapped(gStaticIndexBuffer);
 	gVertexBuffer = gVertexBufferPtr[buffersIdx];
 	gTexCoordBuffer = gTexCoordBufferPtr[buffersIdx];
 	gIndexBuffer = gIndexBufferPtr[buffersIdx];
@@ -740,6 +740,12 @@ static qboolean GLimp_StartDriverAndSetMode(glconfig_t *glConfig, const windowDe
 	if (!inited) {
 		vglUseTripleBuffering(GL_FALSE);
 		vglInitExtended(0, glConfig->vidWidth, glConfig->vidHeight, THREADS_POOL_SIZE, SCE_GXM_MULTISAMPLE_4X);
+		
+		gStaticIndexBuffer = (uint16_t*)malloc(INDEX_BUFFER_SIZE);
+		for (uint16_t i = 0; i < INDEX_BUFFER_NUM; i++){
+			gStaticIndexBuffer[i] = i;
+		}
+		vglIndexPointerMapped(gStaticIndexBuffer);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		inited = true;
 	}
