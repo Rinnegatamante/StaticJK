@@ -355,9 +355,17 @@ static cvarTable_t cvarTable[] = {
 	{ &cg_fov, "cg_fov", "80", CVAR_ARCHIVE },
 	{ &cg_fovAspectAdjust, "cg_fovAspectAdjust", "0", CVAR_ARCHIVE },
 	{ &cg_stereoSeparation, "cg_stereoSeparation", "0.4", CVAR_ARCHIVE  },
+#ifdef __vita__
+	{ &cg_shadows, "cg_shadows", "0", CVAR_ARCHIVE  },
+#else
 	{ &cg_shadows, "cg_shadows", "1", CVAR_ARCHIVE  },
+#endif
 	{ &cg_renderToTextureFX, "cg_renderToTextureFX", "1", CVAR_ARCHIVE  },
+#ifdef __vita__
+	{ &cg_shadowCullDistance, "r_shadowRange", "256", CVAR_ARCHIVE },
+#else
 	{ &cg_shadowCullDistance, "r_shadowRange", "1000", CVAR_ARCHIVE },
+#endif
 	{ &cg_footsteps, "cg_footsteps", "3", CVAR_ARCHIVE  },//1 = sounds, 2 = sounds & effects, 3 = sounds, effects & marks, 4 = always
 	{ &cg_saberEntMarks, "cg_saberEntMarks", "1", CVAR_ARCHIVE  },
 
