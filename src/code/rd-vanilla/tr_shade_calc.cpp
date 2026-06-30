@@ -1058,43 +1058,61 @@ void RB_CalcSpecularAlpha( unsigned char *alphas ) {
 	alphas += 3;
 
 	numVertexes = tess.numVertexes;
-	for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4, alphas += 4) {
-		float ilength;
+	
+	if (backEnd.currentEntity && (backEnd.currentEntity->e.hModel||backEnd.currentEntity->e.ghoul2) ) {	//this is a model so we can use world lights instead fake light
+		VectorCopy (backEnd.currentEntity->lightDir, lightDir);
+		for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4, alphas += 4) {
+			d = 2 * DotProduct (normal, lightDir);
+			
+			reflected[0] = normal[0] * d - lightDir[0];
+			reflected[1] = normal[1] * d - lightDir[1];
+			reflected[2] = normal[2] * d - lightDir[2];
+			
+			VectorSubtract (backEnd.ori.viewOrigin, v, viewer);
+			float ilength = Q_rsqrt( DotProduct( viewer, viewer ) );
+			l = DotProduct (reflected, viewer) * ilength;
 
-		if (backEnd.currentEntity &&
-			(backEnd.currentEntity->e.hModel||backEnd.currentEntity->e.ghoul2) )	//this is a model so we can use world lights instead fake light
-		{
-			VectorCopy (backEnd.currentEntity->lightDir, lightDir);
-		} else {
+			if (l < 0) {
+				b = 0;
+			} else {
+				l = l * l;
+				l = l * l;
+				b = l * 255;
+				if (b > 255) {
+					b = 255;
+				}
+			}
+
+			*alphas = b;
+		}
+	} else {
+		for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4, alphas += 4) {
 			VectorSubtract( lightOrigin, v, lightDir );
 			VectorNormalizeFast( lightDir );
-		}
-		// calculate the specular color
-		d = 2 * DotProduct (normal, lightDir);
+			
+			d = 2 * DotProduct (normal, lightDir);
+			
+			reflected[0] = normal[0] * d - lightDir[0];
+			reflected[1] = normal[1] * d - lightDir[1];
+			reflected[2] = normal[2] * d - lightDir[2];
+			
+			VectorSubtract (backEnd.ori.viewOrigin, v, viewer);
+			float ilength = Q_rsqrt( DotProduct( viewer, viewer ) );
+			l = DotProduct (reflected, viewer) * ilength;
 
-		// we don't optimize for the d < 0 case since this tends to
-		// cause visual artifacts such as faceted "snapping"
-		reflected[0] = normal[0]*d - lightDir[0];
-		reflected[1] = normal[1]*d - lightDir[1];
-		reflected[2] = normal[2]*d - lightDir[2];
-
-		VectorSubtract (backEnd.ori.viewOrigin, v, viewer);
-		ilength = Q_rsqrt( DotProduct( viewer, viewer ) );
-		l = DotProduct (reflected, viewer);
-		l *= ilength;
-
-		if (l < 0) {
-			b = 0;
-		} else {
-			l = l*l;
-			l = l*l;
-			b = l * 255;
-			if (b > 255) {
-				b = 255;
+			if (l < 0) {
+				b = 0;
+			} else {
+				l = l * l;
+				l = l * l;
+				b = l * 255;
+				if (b > 255) {
+					b = 255;
+				}
 			}
-		}
 
-		*alphas = b;
+			*alphas = b;
+		}
 	}
 }
 
