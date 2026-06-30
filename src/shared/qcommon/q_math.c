@@ -358,24 +358,6 @@ float Com_AbsClamp( float min, float max, float value )
 }
 #endif
 
-float Q_rsqrt( float number )
-{
-	byteAlias_t t;
-	float x2, y;
-	const float threehalfs = 1.5F;
-
-	x2 = number * 0.5F;
-	y  = number;
-	t.f  = number;
-	t.i  = 0x5f3759df - ( t.i >> 1 );               // what the fuck?
-	y  = t.f;
-	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
-												//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
-
-	assert( !Q_isnan(y) );
-	return y;
-}
-
 float Q_fabs( float f )
 {
 	byteAlias_t fi;
