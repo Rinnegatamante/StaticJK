@@ -88,7 +88,6 @@ void R_PerformanceCounters( void ) {
 }
 
 #ifdef __vita__
-__thread shaderCommands_t *tessPtr;
 #define VERTEX_BUFFER_SIZE (1 * 1024 * 1024)
 #define TEXCOORD_BUFFER_SIZE (1 * 1024 * 1024)
 float *gVertexBuffer;
@@ -107,16 +106,16 @@ void *renderThread(void *argv) {
 	for (;;) {
 		sceKernelWaitSema(rend_mutex_in, 1, NULL);
 		renderCommandList_t	*cmdList = &backEndDataPtr[rendBackEnd]->commands;
-		tessPtr = &tessArray[rendBackEnd];
+		set_tessPtr(&tessArray[rendBackEnd]);
 		RB_ExecuteRenderCommands( cmdList->cmds );
 		sceKernelSignalSema(rend_mutex_out, 1);
-		rendBackEnd = !rendBackEnd;
+		rendBackEnd = (rendBackEnd + 1) % BACKEND_DATA_NUM;
 	}
 	sceKernelExitDeleteThread(0);
 	return NULL;
 }
-
-
+#else
+__thread shaderCommands_t *tessPtr;
 #endif
 
 /*
@@ -151,9 +150,9 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 
 #ifdef __vita__
 	sceKernelSignalSema(rend_mutex_in, 1);
-	activeBackEnd = !activeBackEnd;
+	activeBackEnd = (activeBackEnd + 1) % BACKEND_DATA_NUM;
 	backEndData = backEndDataPtr[activeBackEnd];
-	tessPtr = &tessArray[activeBackEnd];
+	set_tessPtr(&tessArray[activeBackEnd]);
 #else
 	// actually start the commands going
 	if ( !r_skipBackEnd->integer ) {

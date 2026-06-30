@@ -440,6 +440,10 @@ CRenderableSurface(const CRenderableSurface& rs):
 };
 #endif
 
+#ifndef BACKEND_DATA_NUM
+#define BACKEND_DATA_NUM (2) // sync with tr_local.h
+#endif
+
 class CGhoul2Info
 {
 public:
@@ -470,7 +474,7 @@ public:
 // to here
 #define BSAVE_END_FIELD mTransformedVertsArray	// this is the end point for loadsave, keep it up to date it you change anything
 	intptr_t		*mTransformedVertsArray;	// used to create an array of pointers to transformed verts per surface for collision detection
-	CBoneCache		*mBoneCache;
+	CBoneCache		*mBoneCache[BACKEND_DATA_NUM];
 	int				mSkin;
 
 	// these occasionally are not valid (like after a vid_restart)
@@ -500,8 +504,8 @@ public:
 	mMeshFrameNum(-1),
 	mFlags(0),
 	mTransformedVertsArray(0),
-	mBoneCache(0),
-	mSkin(0),
+mBoneCache{0, 0},
+mSkin(0),
 	mValid(false),
 	currentModel(0),
 	currentModelSize(0),
@@ -653,7 +657,8 @@ public:
 			int i;
 			for (i=0;i<size();i++)
 			{
-				Array()[i].mBoneCache=0;
+				Array()[i].mBoneCache[0]=0;
+				Array()[i].mBoneCache[1]=0;
 				Array()[i].mTransformedVertsArray=0;
 				Array()[i].mSkelFrameNum=0;
 				Array()[i].mMeshFrameNum=0;

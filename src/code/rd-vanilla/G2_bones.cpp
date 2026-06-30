@@ -3430,7 +3430,7 @@ static bool G2_RagDollSettlePositionNumeroTrois(CGhoul2Info_v &ghoul2V, const ve
 		VectorSet(testMins, -e.radius*entScale[0], -e.radius*entScale[1], -e.radius*entScale[2]);
 		VectorSet(testMaxs, e.radius*entScale[0], e.radius*entScale[1], e.radius*entScale[2]);
 
-		assert(ghoul2V[0].mBoneCache);
+		assert(G2BONECACHE(ghoul2V[0]));
 
 		//get the parent bone's position
 		hasDaddy = false;

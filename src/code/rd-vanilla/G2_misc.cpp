@@ -623,7 +623,7 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 		{
 			continue;
 		}
-		assert(g.mBoneCache);
+		assert(G2BONECACHE(g));
 		assert(G2_MODEL_OK(&g));
 		// stop us building this model more than once per frame
 		g.mMeshFrameNum = frameNum;
@@ -663,7 +663,7 @@ void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, 
 
 		G2_FindOverrideSurface(-1,g.mSlist); //reset the quick surface override lookup;
 		// recursively call the model surface transform
-		G2_TransformSurfaces(g.mSurfaceRoot, g.mSlist, g.mBoneCache,  g.currentModel, lod, correctScale, G2VertSpace, g.mTransformedVertsArray, false);
+		G2_TransformSurfaces(g.mSurfaceRoot, g.mSlist, G2BONECACHE(g),  g.currentModel, lod, correctScale, G2VertSpace, g.mTransformedVertsArray, false);
 
 #ifdef _G2_GORE
 

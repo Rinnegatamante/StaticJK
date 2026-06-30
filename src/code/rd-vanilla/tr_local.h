@@ -50,6 +50,8 @@ extern refimport_t ri;
 extern int activeBackEnd;
 extern int rendBackEnd;
 
+#define G2BONECACHE(g) ((g).mBoneCache[activeBackEnd])
+
 // 13 bits
 // can't be increased without changing bit packing for drawsurfs
 // see QSORT_SHADERNUM_SHIFT
@@ -1457,7 +1459,19 @@ typedef __declspec(align(16)) shaderCommands_s	shaderCommands_t;
 typedef shaderCommands_s	shaderCommands_t;
 #endif
 
+#ifdef __vita__
+static inline uint32_t __get_arm_cp15_tls(void) {
+	uint32_t val;
+	__asm__ __volatile__("mrc p15, 0, %0, c13, c0, 3" : "=r" (val));
+	return val;
+}
+#define get_tls_addr() (__get_arm_cp15_tls() - 1980)
+#define set_tessPtr(x) *(uintptr_t *)get_tls_addr() = (uintptr_t)(x);
+#define tessPtr ((shaderCommands_t *)(*(uintptr_t *)get_tls_addr()))
+#else
+#define set_tessPtr(x) tessPtr = x;
 extern __thread shaderCommands_t *tessPtr;
+#endif
 extern shaderCommands_t tessArray[BACKEND_DATA_NUM];
 extern int rendThreadId;
 #define tess (*tessPtr)
@@ -1817,7 +1831,6 @@ typedef struct {
 extern	backEndData_t *backEndData;
 extern	backEndData_t *backEndDataPtr[BACKEND_DATA_NUM];
 #ifdef __vita__
-#include <vitasdk.h>
 extern SceUID rend_mutex_in;
 extern SceUID rend_mutex_out;
 #endif

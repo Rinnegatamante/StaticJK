@@ -1778,7 +1778,7 @@ void R_Init( void ) {
 	memset( &backEnd, 0, sizeof( backEnd ) );
 	memset( &tessArray[0], 0, sizeof( tessArray[0] ) );
 	memset( &tessArray[1], 0, sizeof( tessArray[1] ) );
-	tessPtr = &tessArray[0];
+	set_tessPtr(&tessArray[0]);
 
 #ifndef FINAL_BUILD
 	if ( (intptr_t)tess.xyz & 15 ) {

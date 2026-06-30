@@ -443,8 +443,10 @@ class Ghoul2InfoArray : public IGhoul2InfoArray
 			size_t	model;
 			for (model=0; model< mInfos[idx].size(); model++)
 			{
-				RemoveBoneCache(mInfos[idx][model].mBoneCache);
-				mInfos[idx][model].mBoneCache=0;
+				for (int bi=0; bi<BACKEND_DATA_NUM; bi++) {
+					RemoveBoneCache(mInfos[idx][model].mBoneCache[bi]);
+					mInfos[idx][model].mBoneCache[bi]=0;
+				}
 			}
 		}
 		mInfos[idx].clear();
@@ -962,8 +964,10 @@ qboolean G2API_RemoveGhoul2Model(CGhoul2Info_v &ghlInfo, const int modelIndex)
 	}
 #endif
 
-	RemoveBoneCache(ghlInfo[modelIndex].mBoneCache);
-	ghlInfo[modelIndex].mBoneCache=0;
+	for (int bi=0; bi<BACKEND_DATA_NUM; bi++) {
+		RemoveBoneCache(ghlInfo[modelIndex].mBoneCache[bi]);
+		ghlInfo[modelIndex].mBoneCache[bi]=0;
+	}
 
 	 // set us to be the 'not active' state
 	ghlInfo[modelIndex].mModelindex = -1;

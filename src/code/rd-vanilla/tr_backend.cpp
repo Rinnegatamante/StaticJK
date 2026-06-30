@@ -1323,7 +1323,12 @@ const void	*RB_DrawSurfs( const void *data ) {
 	backEnd.refdef = cmd->refdef;
 	backEnd.viewParms = cmd->viewParms;
 
-	RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
+	backEndData_t *renderBuf = backEndDataPtr[rendBackEnd];
+	backEnd.refdef.entities = renderBuf->entities;
+	backEnd.refdef.dlights = renderBuf->dlights;
+	backEnd.refdef.polys = renderBuf->polys;
+
+	RB_RenderDrawSurfList( renderBuf->drawSurfs, cmd->numDrawSurfs );
 
 	// Dynamic Glow/Flares:
 	/*
@@ -1351,7 +1356,7 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 		// Render the glowing objects.
 		g_bRenderGlowingObjects = true;
-		RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
+		RB_RenderDrawSurfList( renderBuf->drawSurfs, cmd->numDrawSurfs );
 		g_bRenderGlowingObjects = false;
 		qglFinish();
 
